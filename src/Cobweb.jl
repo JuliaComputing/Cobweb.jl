@@ -99,10 +99,14 @@ struct Page
     node::Node
 end
 
-function Base.display(::CobwebDisplay, page::Page)
+function writehtml(page::Page)
     Base.open(htmlfile, "w") do io
         show(io, MIME("text/html"), page.node)
     end
+end
+
+function Base.display(::CobwebDisplay, page::Page)
+    writehtml(page)
     DefaultApplication.open(htmlfile)
 end
 

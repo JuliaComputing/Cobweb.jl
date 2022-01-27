@@ -8,10 +8,10 @@ page = h.html(
     ),
     h.body(
         h.h1("This page was built with", h.code("Cobweb.jl"), "."),
-        h.p("This is a paragraph.")
+        h.p("Take a look at ", h.code("docs/makedocs.jl"), " inside the Cobweb.jl repo.")
     )
 )
 
-Page(page)
+Cobweb.writehtml(Page(page))
 
-cp(Cobweb.htmlfile, joinpath(@__DIR__, "index.html"))
+cp(Cobweb.htmlfile, joinpath(@__DIR__, "index.html"), force=true)

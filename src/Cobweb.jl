@@ -1,5 +1,17 @@
 module Cobweb
 
+using DefaultApplication: DefaultApplication
+using Scratch: @get_scratch!
+
+#-----------------------------------------------------------------------------# init
+htmlfile = ""  # path to cobweb.html
+struct CobwebDisplay <: AbstractDisplay end
+
+function __init__()
+    global htmlfile = touch(joinpath(@get_scratch!("CobWeb"), "cobweb.html"))
+    pushdisplay(CobwebDisplay())
+end
+
 #-----------------------------------------------------------------------------# Node
 struct Node
     tag::String
@@ -82,6 +94,19 @@ function write_javascript(io, x::AbstractDict)
     end
 end
 
+#-----------------------------------------------------------------------------# Page
+struct Page
+    node::Node
+end
+
+function Base.display(::CobwebDisplay, page::Page)
+    Base.open(htmlfile, "w") do io
+        show(io, MIME("text/html"), page.node)
+    end
+    DefaultApplication.open(htmlfile)
+end
+
+#-----------------------------------------------------------------------------# open
 
 
 end #module

@@ -7,7 +7,7 @@ page = h.html(
         h.title("Cobweb.jl Docs")
     ),
     h.body(
-        h.h1("This page was built with", h.code("Cobweb.jl"), "."),
+        h.h1("This page was built with ", h.code("Cobweb.jl"), "."),
         h.p("Take a look at ", h.code("docs/makedocs.jl"), " inside the Cobweb.jl repo.")
     )
 )

@@ -22,8 +22,6 @@ h.div()."text-center text-xl"(
 )
 ```
 
-- This creates (take a look at the raw README.md file to see the html):
-
 <div class="text-center text-xl"><h4 class="you_can_add_classes_this_way_too" id="or_any_other_attribute">This generates an h2 node</h4><p>This is a paragraph.</p><div><div class="markdown"><ul>
 <li><p>I can put any text/html-representable type in here&#33; and will &quot;just work&quot;™</p>
 </li>

@@ -117,7 +117,7 @@ write_javascript(io::IO, x) = show(io, MIME"text/javascript"(), x)
 write_javascript(io::IO, ::Nothing) = print(io, "null")
 write_javascript(io::IO, x::String) = print(io, '"', x, '"')
 write_javascript(io::IO, x::Union{Bool, Real}) = print(io, x)
-function write_javascript(io, x::AbstractDict)
+function write_javascript(io::IO, x::AbstractDict)
     if isempty(x)
         print(io, "null")
     else

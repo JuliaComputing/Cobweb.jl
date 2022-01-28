@@ -79,7 +79,7 @@ ReactDOM.render(app, document.getElementById('root'));
 
 - For working interactively, you can repeatedly call `Cobweb.Page(mynode)` to open up a browser window/tab
 
-```
+```julia
 using Cobweb: h, Page
 
 page = h.html(

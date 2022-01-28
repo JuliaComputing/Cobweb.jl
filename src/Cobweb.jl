@@ -47,12 +47,13 @@ function escape_html(x::String)
     replace(x,  "&"=>"&amp;", "\""=>"&quot;",  "'"=>"&#39;",  "<"=>"&lt;",  ">"=>"&gt;")
 end
 
-#-----------------------------------------------------------------------------# show
-# HTML
+#-----------------------------------------------------------------------------# show (html)
 function Base.show(io::IO, node::Node)
     color = get(io, :tagcolor, 1)
+    level = get(io, :level, 0)
+    indent = ' ' ^ get(io, :indent, 2)
     p(args...) = printstyled(io, args...; color)
-    p('<', node.tag)
+    p(indent ^ level, '<', node.tag)
     for (k,v) in node.attrs
         if v == "true"
             p(' ', k)
@@ -62,18 +63,30 @@ function Base.show(io::IO, node::Node)
         end
     end
     p('>')
+    has_node_children = any(x -> x isa Node, node.children)
+    has_node_children && p('\n')
+    n_nodes = 0
     for (i, child) in enumerate(node.children)
         if child isa String
-            p(escape_html(child))
+            has_node_children ?
+                p(indent ^ (level + 1), escape_html(child), '\n') :
+                p(escape_html(child))
+        elseif child isa Node
+            show(IOContext(io, :tagcolor => color + i + n_nodes, :level => level+1), MIME("text/html"), child)
+            n_nodes = sum(x -> x isa Node, child.children, init=0)
         else
-            show(IOContext(io, :tagcolor => color + 1), MIME("text/html"), child)
+            show(io, MIME("text/html"), child)
         end
     end
-    p("</", node.tag, '>')
+    if has_node_children
+        p(indent ^ level, "</", node.tag, '>', '\n')
+    else
+        p("</", node.tag, '>', '\n')
+    end
 end
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
 
-# Javascript
+#-----------------------------------------------------------------------------# show (javascript)
 function Base.show(io::IO, M::MIME"text/javascript", node::Node)
     print(io, "m(\"", node.tag, "\", ")
     write_javascript(io, node.attrs)

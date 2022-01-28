@@ -1,15 +1,15 @@
-<h1 align="center">Cobweb</h1>
+<h1 align="center">🕸️ Cobweb</h1>
 
 <h4 align="center">A Julia package for <b>cob</b>bling together <b>web</b> pages.</h4>
 
-# Cool Features
+# 🆒 Cool Features
 
 - Instantly open any `"text/html"`-representable object inside your browser with `Cobweb.Page(x)`
 - Easily create web content with `Cobweb.h(tag, content...; attrs...)`
 
-# Creating Nodes with `Cobweb.h`
+# ✨ Creating Nodes with `Cobweb.h`
 
-- The syntax for `Cobweb.h` is designed to look similar to html:
+- The syntax for `Cobweb.h` is designed to look similar to html.
 
 ```julia
 using Cobweb: h
@@ -28,21 +28,20 @@ h.div()."text-center text-xl"(
 </ul>
 </div></div></div>
 
+### `Cobweb.h` Syntax Summary:
 
-## Attributes
-
-- Only `Bool` is special-cased:
+- `node = h(tag, children...; attrs...)`
+- `node = h.tag(children...; attrs...)`
+- `node."add_a_class"
+- `node("add", "children")
+- `node.attrs["some_attribute"] = "add an attribute"
+- `Bool` attributes are special cased:
     - `h.div(hidden=true)` --> `<div hidden></div>`
     - `h.div(hidden=false)` --> `<div></div>`
-- Everything else is converted to `String`.
 
 ## Writing HTML
 
-- A `Cobweb.Node` displays in the REPL as HTML.  This is the same representation that gets used by:
-
-```julia
-Base.show(::IO, ::MIME"text/html", ::Node)
-```
+- A `Cobweb.Node` (what gets created by `Cobweb.h`) displays in the REPL as HTML.  This is the same representation that gets used by: `Base.show(::IO, ::MIME"text/html", ::Node)`.  You can add whitespace/indentation with `Cobweb.pretty(::IO, ::Node)`.
 
 ## Writing Javascript
 
@@ -61,7 +60,10 @@ using Cobweb: h
 node = h.div(h.p("paragraph 1"), h.p("paragraph 2"), class="text-center")
 
 print(repr("text/javascript", node))
-# m("div", {class:"text-center"}, m("p", null, "paragraph 1"), m("p", null, "paragraph 2"))
+```
+
+```
+m("div", {class:"text-center"}, m("p", null, "paragraph 1"), m("p", null, "paragraph 2"))
 ```
 
 - If you were writing this node into a React script for example, you'd want it to look something like:

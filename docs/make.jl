@@ -14,4 +14,4 @@ page = h.html(
 
 Cobweb.writehtml(Page(page))
 
-cp(Cobweb.htmlfile, joinpath(@__DIR__, "index.html"), force=true)
+cp(Cobweb.htmlfile, joinpath(mkpath(joinpath(@__DIR__, "build")), "index.html"), force=true)

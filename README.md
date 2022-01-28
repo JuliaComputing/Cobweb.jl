@@ -4,8 +4,11 @@
 
 # 🆒 Features
 
-- Instantly open any `"text/html"`-representable object inside your browser with `Cobweb.Page(x)`
-- Easily create web content with `Cobweb.h(tag, content...; attrs...)`
+- Instantly open any `"text/html"`-representable object inside your browser with `Cobweb.Page(x)`.
+- Easily create web content with `Cobweb.h(tag, content...; attrs...)`.
+
+<br>
+<br>
 
 # ✨ Creating Nodes with `Cobweb.h`
 
@@ -39,9 +42,17 @@ h.div()."text-center text-xl"(
     - `h.div(hidden=true)` --> `<div hidden></div>`
     - `h.div(hidden=false)` --> `<div></div>`
 
+
+<br>
+<br>
+
 ## 📄 Writing HTML
 
 - A `Cobweb.Node` (what gets created by `Cobweb.h`) displays in the REPL as HTML.  This is the same representation that gets used by: `Base.show(::IO, ::MIME"text/html", ::Node)`.  You can add whitespace/indentation with `Cobweb.pretty(::IO, ::Node)`.
+
+<br>
+<br>
+
 
 ## 📄 Writing Javascript
 
@@ -76,6 +87,8 @@ const app = ... // repr("text/javascript", node)
 ReactDOM.render(app, document.getElementById('root'));
 ```
 
+<br>
+<br>
 
 ## 🏃 Quickstart
 

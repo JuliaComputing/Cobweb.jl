@@ -109,3 +109,7 @@ page = h.html(
 
 Page(page)  # Open in browser
 ```
+
+## Attribution
+
+- Cobweb.jl is highly influenced by [Hyperscript.jl](https://github.com/JuliaWeb/Hyperscript.jl)

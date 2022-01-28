@@ -44,7 +44,11 @@ end
 #-----------------------------------------------------------------------------# escapeHTML
 # Taken from HTTPCommon.jl (ref: http://stackoverflow.com/a/7382028/3822752)
 function escape_html(x::String)
-    replace(x,  "&"=>"&amp;", "\""=>"&quot;",  "'"=>"&#39;",  "<"=>"&lt;",  ">"=>"&gt;")
+    s = replace(x,  "&"=>"&amp;")
+    s = replace(s, "\""=>"&quot;")
+    s = replace(s, "'"=>"&#39;")
+    s = replace(s, "<"=>"&lt;")
+    replace(s, ">"=>"&gt;")
 end
 
 #-----------------------------------------------------------------------------# show (html)

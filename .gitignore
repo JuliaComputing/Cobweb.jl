@@ -4,3 +4,4 @@
 *.js.map
 *.log
 *.Manifest.toml
+docs/build

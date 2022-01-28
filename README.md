@@ -23,12 +23,13 @@ h.div()."text-center text-xl"(
 ```
 
 - This creates:
-
+<div style="background-color: #a7f3d0">
 <div class="text-center text-xl"><h1 class="you_can_add_classes_this_way_too" id="or_any_other_attribute">This is my title!</h1><p>This is a paragraph.</p><div><div class="markdown"><ul>
 <li><p>I can put any text/html-representable type in here&#33; and will &quot;just work&quot;™</p>
 </li>
 </ul>
 </div></div></div>
+</div>
 
 
 ## Attributes

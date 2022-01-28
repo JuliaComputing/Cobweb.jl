@@ -13,7 +13,7 @@ jobs:
         with:
           version: '1.6'
       - name: Install dependencies
-        run: julia --project=. -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
       - name: Build docs
         run: julia --project=. docs/make.jl
       - name: Deploy

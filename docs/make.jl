@@ -9,7 +9,10 @@ page = h.html(
     ),
     h.body(
         h.h1("This page was built with ", h.code("Cobweb.jl"), "."),
-        h.p("Take a look at ", h.code("docs/make.jl"), " inside the Cobweb.jl repo.")
+        Markdown.parse("""
+        Take a look at [`docs/make.jl`](https://github.com/joshday/Cobweb.jl/blob/main/docs/make.jl) inside the [`Cobweb.jl` repo](https://github.com/joshday/Cobweb.jl).
+        """)
+
     )
 )
 

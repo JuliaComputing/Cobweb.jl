@@ -35,9 +35,9 @@ h.div()."text-center text-xl"(
 
 - `node = h(tag, children...; attrs...)`
 - `node = h.tag(children...; attrs...)`
-- `node."add_a_class"
-- `node("add", "children")
-- `node.attrs["some_attribute"] = "add an attribute"
+- `node."add_class"`
+- `node("add", "children")`
+- `node.attrs["some_attribute"] = "add an attribute"`
 - `Bool` attributes are special cased:
     - `h.div(hidden=true)` --> `<div hidden></div>`
     - `h.div(hidden=false)` --> `<div></div>`

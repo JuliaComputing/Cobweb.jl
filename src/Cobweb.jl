@@ -97,6 +97,11 @@ end
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
 
 #-----------------------------------------------------------------------------# show (javascript)
+struct Javascript
+    x::String
+end
+Base.show(io::IO, ::MIME"text/javascript", j::Javascript) = print(io, j.x)
+
 function Base.show(io::IO, M::MIME"text/javascript", node::Node)
     print(io, "m(\"", node.tag, "\", ")
     write_javascript(io, node.attrs)
@@ -107,7 +112,8 @@ function Base.show(io::IO, M::MIME"text/javascript", node::Node)
     print(io, ")")
 end
 
-write_javascript(io::IO, x::Node) = show(io, MIME"text/javascript"(), x)
+write_javascript(io::IO, x) = show(io, MIME"text/javascript"(), x)
+
 write_javascript(io::IO, ::Nothing) = print(io, "null")
 write_javascript(io::IO, x::String) = print(io, '"', x, '"')
 write_javascript(io::IO, x::Union{Bool, Real}) = print(io, x)
@@ -127,13 +133,13 @@ end
 
 #-----------------------------------------------------------------------------# Page
 struct Page
-    node::Node
+    x
 end
 
 function writehtml(page::Page)
     Base.open(htmlfile, "w") do io
         println(io, "<!doctype html>")
-        show(io, MIME("text/html"), page.node)
+        show(io, MIME("text/html"), page.x)
     end
 end
 

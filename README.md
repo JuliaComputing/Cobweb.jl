@@ -2,32 +2,34 @@
 
 A Julia package for **cob**bling together **web** pages.
 
+# Cool Features
+
+- Instantly open any `"text/html"`-representable object inside your browser with `Cobweb.Page(x)`
+- Easily create web content with `Cobweb.h(tag, content...; attrs)`
+
 # Creating Nodes with `Cobweb.h`
 
-- You create nodes with the `h` function:
-
-```julia
-h(tag, content...; attrs...)
-```
-
-- The following lines all create the same node:
+- The syntax for `Cobweb.h` is designed to look similar to html:
 
 ```julia
 using Cobweb: h
+using Markdown
 
-h("div", "content", class="class1 class2", id="my_id")
-
-h.div("content"; class="class1 class2", id="my_id")
-
-h.div(class="class1 class2", id="my_id")("content")
-
-h.div(id="my_id")."class1 class2"("content")
+h.div()."text-center text-xl"(
+    h.h1("This is my title!"; class="you_can_add_classes_this_way_too", id="or_any_other_attribute"),
+    h.p("This is a paragraph."),
+    h.div(Markdown.parse("- I can put any text/html-representable type in here! and will \"just work\"™"))
+)
 ```
 
-- In other words:
-- `h.p(args...; kw...)` is the same as `h("p", args...; kw...)`
-- `mydiv."c1 c2"` "overwrites" the `class` attribute with `"c1 c2"`
-    - Nothing is actually overwritten, but another `Node` is generated.
+- This creates:
+
+<div class="text-center text-xl"><h1 class="you_can_add_classes_this_way_too" id="or_any_other_attribute">This is my title!</h1><p>This is a paragraph.</p><div><div class="markdown"><ul>
+<li><p>I can put any text/html-representable type in here&#33; and will &quot;just work&quot;™</p>
+</li>
+</ul>
+</div></div></div>
+
 
 ## Attributes
 
@@ -36,7 +38,7 @@ h.div(id="my_id")."class1 class2"("content")
     - `h.div(hidden=false)` --> `<div></div>`
 - Everything else is converted to `String`.
 
-## HTML
+## Writing HTML
 
 - A `Cobweb.Node` displays in the REPL as HTML.  This is the same representation that gets used by:
 
@@ -44,7 +46,7 @@ h.div(id="my_id")."class1 class2"("content")
 Base.show(::IO, ::MIME"text/html", ::Node)
 ```
 
-## Javascript
+## Writing Javascript
 
 - `Cobweb.Node`s can be represented as a Javascript object that many libraries use internally to
 represent nodes (e.g. [React.js](https://reactjs.org), [Preact.js](https://preactjs.com), and [Mithril.js](https://mithril.js.org)):
@@ -94,7 +96,7 @@ page = h.html(
     )
 )
 
-Page(page)
+Page(page)  # Open in browser
 ```
 
 ### Generated HTML:

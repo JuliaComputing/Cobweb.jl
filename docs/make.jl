@@ -1,5 +1,6 @@
 using Cobweb
 using Cobweb: h, Page
+using Markdown
 
 page = h.html(
     h.head(

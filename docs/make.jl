@@ -17,6 +17,6 @@ page = h.html(
     )
 )
 
-Cobweb.writehtml(Page(page))
+Cobweb.write_html(Page(page))
 
 cp(Cobweb.htmlfile, joinpath(mkpath(joinpath(@__DIR__, "build")), "index.html"), force=true)

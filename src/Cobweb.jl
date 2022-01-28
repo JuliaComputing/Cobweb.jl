@@ -17,7 +17,9 @@ struct Node
     tag::String
     attrs::Dict{String,String}
     children::Vector
-    Node(tag, attrs, children) = new(tag, attrs, children)
+    function Node(tag, attrs, children)
+        new(tag, attrs, children)
+    end
 end
 
 function Base.getproperty(node::Node, class::String)
@@ -39,6 +41,12 @@ function Base.getproperty(::typeof(h), tag::Symbol)
     return f
 end
 
+#-----------------------------------------------------------------------------# escapeHTML
+# Taken from HTTPCommon.jl (ref: http://stackoverflow.com/a/7382028/3822752)
+function escape_html(x::String)
+    replace(x,  "&"=>"&amp;", "\""=>"&quot;",  "'"=>"&#39;",  "<"=>"&lt;",  ">"=>"&gt;")
+end
+
 #-----------------------------------------------------------------------------# show
 # HTML
 function Base.show(io::IO, node::Node)
@@ -56,7 +64,7 @@ function Base.show(io::IO, node::Node)
     p('>')
     for (i, child) in enumerate(node.children)
         if child isa String
-            p(child)
+            p(escape_html(child))
         else
             show(IOContext(io, :tagcolor => color + 1), MIME("text/html"), child)
         end
@@ -109,8 +117,5 @@ function Base.display(::CobwebDisplay, page::Page)
     writehtml(page)
     DefaultApplication.open(htmlfile)
 end
-
-#-----------------------------------------------------------------------------# open
-
 
 end #module

@@ -1,12 +1,47 @@
 using Cobweb
-using Cobweb: h
+using Cobweb: h, Page, Node
 using Test
 
 n1 = h.div("hi")
 
+#-----------------------------------------------------------------------------#
+@testset "Node Creation" begin
+    for node in [
+            h("div"),
+            h.div(),
+            h("div", "child"),
+            h.div("child"),
+            h.("p", "c1", "c2"),
+            h.p("c1", "c2"),
+            h.h1()."class"("c1", "c2")
+        ]
+        @test node isa Node
+    end
+    node = h.h1()."class"("c1", "c2")
+    @test node.attrs["class"] == "class"
+    @test length(node.children) == 2
+end
+#-----------------------------------------------------------------------------#
 @testset "HTML" begin
     @test repr(n1) == "<div>hi</div>"
 end
+#-----------------------------------------------------------------------------#
 @testset "Javascript" begin
     @test repr("text/javascript", n1) == """m("div", null, "hi")"""
+end
+#-----------------------------------------------------------------------------#
+@testset "Page" begin
+    page = Page(n1)
+    @test isfile(Cobweb.htmlfile)
+    Cobweb.save(page, "temp.html")
+    @test isfile("temp.html")
+    rm("temp.html", force=true)
+end
+#-----------------------------------------------------------------------------#
+@testset "escaping" begin
+    chars = ['<', '>', ''', '"']
+    for char in chars
+        @test char ∉ Cobweb.escape_html(join(chars))
+    end
+    @test Cobweb.escape_html("&") != "&"
 end

@@ -136,7 +136,14 @@ struct Page
     x
 end
 
-function writehtml(page::Page)
+save(page::Page, file::String) = save(file, page)
+
+function save(file::String, page::Page)
+    write_html(page)
+    mv(htmlfile, file)
+end
+
+function write_html(page::Page)
     Base.open(htmlfile, "w") do io
         println(io, "<!doctype html>")
         show(io, MIME("text/html"), page.x)
@@ -144,7 +151,7 @@ function writehtml(page::Page)
 end
 
 function Base.display(::CobwebDisplay, page::Page)
-    writehtml(page)
+    write_html(page)
     DefaultApplication.open(htmlfile)
 end
 

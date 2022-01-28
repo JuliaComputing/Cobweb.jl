@@ -2,7 +2,7 @@
 
 <h4 align="center">A Julia package for <b>cob</b>bling together <b>web</b> pages.</h4>
 
-# 🆒 Cool Features
+# 🆒 Features
 
 - Instantly open any `"text/html"`-representable object inside your browser with `Cobweb.Page(x)`
 - Easily create web content with `Cobweb.h(tag, content...; attrs...)`
@@ -39,11 +39,11 @@ h.div()."text-center text-xl"(
     - `h.div(hidden=true)` --> `<div hidden></div>`
     - `h.div(hidden=false)` --> `<div></div>`
 
-## Writing HTML
+## 📄 Writing HTML
 
 - A `Cobweb.Node` (what gets created by `Cobweb.h`) displays in the REPL as HTML.  This is the same representation that gets used by: `Base.show(::IO, ::MIME"text/html", ::Node)`.  You can add whitespace/indentation with `Cobweb.pretty(::IO, ::Node)`.
 
-## Writing Javascript
+## 📄 Writing Javascript
 
 - `Cobweb.Node`s can be represented as a Javascript object that many libraries use internally to
 represent nodes (e.g. [React.js](https://reactjs.org), [Preact.js](https://preactjs.com), and [Mithril.js](https://mithril.js.org)):
@@ -77,9 +77,7 @@ ReactDOM.render(app, document.getElementById('root'));
 ```
 
 
-## Full Page example
-
-- For working interactively, you can repeatedly call `Cobweb.Page(mynode)` to open up a browser window/tab
+## 🏃 Quickstart
 
 ```julia
 using Cobweb: h, Page
@@ -97,20 +95,4 @@ page = h.html(
 )
 
 Page(page)  # Open in browser
-```
-
-### Generated HTML:
-
-```html
-<html>
-  <head>
-    <meta charset="UTF-8"></meta>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
-    <title>Page Title</title>
-  </head>
-  <body>
-    <h1>This is my page title.</h1>
-    <p>This is a paragraph.</p>
-  </body>
-</html>
 ```

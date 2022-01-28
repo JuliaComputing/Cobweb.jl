@@ -48,10 +48,15 @@ function escape_html(x::String)
 end
 
 #-----------------------------------------------------------------------------# show (html)
+pretty(x) = (io = IOBuffer(); pretty(io, x); String(take!(io)))
+
+pretty(io::IO, node::Node) = show(IOContext(io, :pretty=>true), node)
+
 function Base.show(io::IO, node::Node)
     color = get(io, :tagcolor, 1)
-    level = get(io, :level, 0)
-    indent = ' ' ^ get(io, :indent, 2)
+    pretty = get(io, :pretty, false)
+    level = pretty ? get(io, :level, 0) : 0
+    indent = pretty ? ' ' ^ get(io, :indent, 2) : ""
     p(args...) = printstyled(io, args...; color)
     p(indent ^ level, '<', node.tag)
     for (k,v) in node.attrs
@@ -64,7 +69,7 @@ function Base.show(io::IO, node::Node)
     end
     p('>')
     has_node_children = any(x -> x isa Node, node.children)
-    has_node_children && p('\n')
+    pretty && has_node_children && p('\n')
     n_nodes = 0
     for (i, child) in enumerate(node.children)
         if child isa String
@@ -79,10 +84,11 @@ function Base.show(io::IO, node::Node)
         end
     end
     if has_node_children
-        p(indent ^ level, "</", node.tag, '>', '\n')
+        p(indent ^ level, "</", node.tag, '>')
     else
-        p("</", node.tag, '>', '\n')
+        p("</", node.tag, '>')
     end
+    pretty && println(io)
 end
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
 
@@ -122,6 +128,7 @@ end
 
 function writehtml(page::Page)
     Base.open(htmlfile, "w") do io
+        println(io, "<!doctype html>")
         show(io, MIME("text/html"), page.node)
     end
 end

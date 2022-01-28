@@ -1,11 +1,11 @@
-# Cobweb
+<h1 align="center">Cobweb</h1>
 
-A Julia package for **cob**bling together **web** pages.
+<h4 align="center">A Julia package for <b>cob</b>bling together <b>web</b> pages.</h4>
 
 # Cool Features
 
 - Instantly open any `"text/html"`-representable object inside your browser with `Cobweb.Page(x)`
-- Easily create web content with `Cobweb.h(tag, content...; attrs)`
+- Easily create web content with `Cobweb.h(tag, content...; attrs...)`
 
 # Creating Nodes with `Cobweb.h`
 

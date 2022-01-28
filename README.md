@@ -16,20 +16,19 @@ using Cobweb: h
 using Markdown
 
 h.div()."text-center text-xl"(
-    h.h1("This is my title!"; class="you_can_add_classes_this_way_too", id="or_any_other_attribute"),
+    h.h4("This generates an h2 node"; class="you_can_add_classes_this_way_too", id="or_any_other_attribute"),
     h.p("This is a paragraph."),
     h.div(Markdown.parse("- I can put any text/html-representable type in here! and will \"just work\"™"))
 )
 ```
 
-- This creates:
-<div style="background-color: #a7f3d0">
-<div class="text-center text-xl"><h1 class="you_can_add_classes_this_way_too" id="or_any_other_attribute">This is my title!</h1><p>This is a paragraph.</p><div><div class="markdown"><ul>
+- This creates (take a look at the raw README.md file to see the html):
+
+<div class="text-center text-xl"><h4 class="you_can_add_classes_this_way_too" id="or_any_other_attribute">This generates an h2 node</h4><p>This is a paragraph.</p><div><div class="markdown"><ul>
 <li><p>I can put any text/html-representable type in here&#33; and will &quot;just work&quot;™</p>
 </li>
 </ul>
 </div></div></div>
-</div>
 
 
 ## Attributes

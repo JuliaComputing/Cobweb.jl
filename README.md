@@ -19,13 +19,13 @@ using Cobweb: h
 using Markdown
 
 h.div()."text-center text-xl"(
-    h.h4("This generates an h2 node!"; class="you_can_add_classes_this_way_too", id="or_any_other_attribute"),
+    h.h3("This generates an h3 node!"; class="you_can_add_classes_this_way_too", id="or_any_other_attribute"),
     h.p("This is a paragraph."),
     h.div(Markdown.parse("- I can put any text/html-representable type in here! and will \"just work\"™"))
 )
 ```
 
-<div class="text-center text-xl"><h4 class="you_can_add_classes_this_way_too" id="or_any_other_attribute">This generates an h2 node!</h4><p>This is a paragraph.</p><div><div class="markdown"><ul>
+<div class="text-center text-xl"><h3 class="you_can_add_classes_this_way_too" id="or_any_other_attribute">This generates an h3 node!</h3><p>This is a paragraph.</p><div><div class="markdown"><ul>
 <li><p>I can put any text/html-representable type in here&#33; and will &quot;just work&quot;™</p>
 </li>
 </ul>
@@ -45,13 +45,12 @@ h.div()."text-center text-xl"(
 
 ### The `@h` macro
 
-This is a simple utility macro that replaces symbols `f` with `Cobweb.h.f`.  This
-lets you use
+This is a simple utility macro that replaces symbols `f` with `Cobweb.h.f` for a cleaner syntax:
 
 ```julia
 Cobweb.@h begin
     div()."text-center text-xl"(
-        h4("This generates an h2 node!"),
+        h4("This generates an h4 node!"),
         p("This is a paragraph"),
         div("Here is a div.")
     )

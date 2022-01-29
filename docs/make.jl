@@ -2,11 +2,15 @@ using Cobweb
 using Cobweb: h, Page
 using Markdown
 
+css = Config()
+
+
 page = h.html(
     h.head(
         h.meta(charset="UTF-8"),
         h.meta(name="viewport", content="width=device-width, initial-scale=1.0"),
-        h.title("Cobweb.jl Docs")
+        h.title("Cobweb.jl Docs"),
+        CSS(css)
     ),
     h.body(
         h.h1("This page was built with ", h.code("Cobweb.jl"), "."),

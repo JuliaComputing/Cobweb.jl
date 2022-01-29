@@ -43,6 +43,22 @@ h.div()."text-center text-xl"(
     - `h.div(hidden=false)` --> `<div></div>`
 
 
+### The `@h` macro
+
+This is a simple utility macro that replaces symbols `f` with `Cobweb.h.f`.  This
+lets you use
+
+```julia
+Cobweb.@h begin
+    div()."text-center text-xl"(
+        h4("This generates an h2 node!"),
+        p("This is a paragraph"),
+        div("Here is a div.")
+    )
+end
+```
+
+
 <br>
 <br>
 
@@ -86,6 +102,38 @@ const app = ... // repr("text/javascript", node)
 
 ReactDOM.render(app, document.getElementById('root'));
 ```
+
+<br>
+<br>
+
+## CSS
+
+You can create `Cobweb.CSS` from any `AbstractDict`:
+- `selector => AbstractDict (property => value)`.
+- We like using [`EasyConfig.Config`](https://github.com/joshday/EasyConfig.jl) for this.
+- `Cobweb.CSS` can be included directly (because of its `MIME("text/html")` show method).  You can
+  also write to a file with `open(io -> show(io, css), mycssfile)`.
+
+```julia
+using EasyConfig
+using Cobweb: h
+
+css = Config()
+
+css.p."font-family" = "Arial"
+css."p.upper"."text-transform"= "uppercase"
+css."p.blue".color = "blue"
+
+page = h.html(
+    h.head(Cobweb.CSS(css)),
+    h.body(
+        h.p("this is uppercased and blue in an Arial font.", class="upper blue")
+    )
+)
+
+Cobweb.Page(page)
+```
+
 
 <br>
 <br>

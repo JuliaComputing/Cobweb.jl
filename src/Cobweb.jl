@@ -41,6 +41,22 @@ function Base.getproperty(::typeof(h), tag::Symbol)
     return f
 end
 
+macro h(ex)
+    esc(_h(ex))
+end
+
+function _h(ex::Expr)
+    for i in 1:length(ex.args)
+        x = ex.args[i]
+        if x isa Expr
+            ex.args[i] = _h(x)
+        elseif x isa Symbol
+            ex.args[i] = Expr(:., :(Cobweb.h), QuoteNode(ex.args[1]))
+        end
+    end
+    ex
+end
+
 #-----------------------------------------------------------------------------# escapeHTML
 # Taken from HTTPCommon.jl (ref: http://stackoverflow.com/a/7382028/3822752)
 function escape_html(x::String)
@@ -129,6 +145,28 @@ function write_javascript(io::IO, x::AbstractDict)
         end
         print(io,'}')
     end
+end
+
+#-----------------------------------------------------------------------------# CSS
+struct CSS
+    content::Dict{String, Dict{String,String}}
+    function CSS(o::AbstractDict)
+        new(Dict(string(k) => Dict(string(k2) => string(v2) for (k2,v2) in pairs(v)) for (k,v) in pairs(o)))
+    end
+end
+function Base.show(io::IO, o::CSS)
+    for (k,v) in o.content
+        println(io, k, " {")
+        for (k2, v2) in v
+            println(io, "  ", k2, ':', ' ', v2, ';')
+        end
+        println(io, '}')
+    end
+end
+function Base.show(io::IO, ::MIME"text/html", o::CSS)
+    println(io, "<style>")
+    print(io, o)
+    println(io, "</style>")
 end
 
 #-----------------------------------------------------------------------------# Page

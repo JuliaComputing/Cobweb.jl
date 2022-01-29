@@ -1,5 +1,5 @@
 using Cobweb
-using Cobweb: h, Page
+using Cobweb: h, Page, CSS
 using Markdown
 
 css = Dict(

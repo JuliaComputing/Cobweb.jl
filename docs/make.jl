@@ -3,6 +3,7 @@ using Cobweb: h, Page
 using Markdown
 
 css = Config()
+css.html."font-family" = "Arial"
 
 
 page = h.html(

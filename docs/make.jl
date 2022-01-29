@@ -2,8 +2,11 @@ using Cobweb
 using Cobweb: h, Page
 using Markdown
 
-css = Config()
-css.html."font-family" = "Arial"
+css = Dict(
+    "html" => Dict(
+        "font-family" => "Arial"
+    )
+)
 
 
 page = h.html(

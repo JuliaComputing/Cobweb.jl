@@ -33,7 +33,10 @@ h.div()."text-center text-xl"(
 </ul>
 </div></div></div>
 
-### `Cobweb.h` Syntax Summary:
+<br>
+<br>
+
+## `Cobweb.h` Syntax Summary:
 
 - `node = h(tag, children...; attrs...)`
 - `node = h.tag(children...; attrs...)`

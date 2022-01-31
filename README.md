@@ -131,7 +131,9 @@ page = h.html(
     ),
     h.body(
         h.h1("This is my page title."),
-        h.p("This is a paragraph.")
+        h.p("This is a paragraph."),
+        h.button("Click Me for an alert!", onclick="buttonClicked()"),
+        Cobweb.Javascript("const buttonClicked = () => alert('This button was clicked!')"),
     )
 )
 

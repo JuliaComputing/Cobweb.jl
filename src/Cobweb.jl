@@ -8,6 +8,7 @@ struct CobwebDisplay <: AbstractDisplay end
 
 function __init__()
     global DIR = @get_scratch!("CobWeb")
+    global BUILD = joinpath(DIR, "build")
     pushdisplay(CobwebDisplay())
 end
 
@@ -130,41 +131,6 @@ function Base.show(io::IO, ::MIME"text/html", j::Javascript)
     print(io, "</script>")
 end
 
-# #-----------------------------------------------------------------------------# Virtual DOM
-# function Base.show(io::IO, M::MIME"text/javascript", node::Node)
-#     print(io, "{type:\"", node.tag, "\",props:")
-#     children = length(node.children) == 1 ? node.children[1] : node.children
-#     write_javascript(io, merge(node.attrs, Dict("children" => children)))
-#     print(io, '}')
-# end
-
-# write_javascript(io::IO, x) = show(io, MIME"text/javascript"(), x)
-
-# write_javascript(io::IO, ::Nothing) = print(io, "null")
-# write_javascript(io::IO, x::String) = print(io, '"', x, '"')
-# write_javascript(io::IO, x::Union{Bool, Real}) = print(io, x)
-# function write_javascript(io::IO, x::AbstractArray)
-#     print(io, '[')
-#     for (i,x) in enumerate(x)
-#         write_javascript(io, x)
-#         i != length(x) && print(io, ',')
-#     end
-#     print(io, ']')
-# end
-# function write_javascript(io::IO, x::AbstractDict)
-#     if isempty(x)
-#         print(io, "null")
-#     else
-#         print(io, '{')
-#         for (i,(k,v)) in enumerate(x)
-#             print(io, k, ':')
-#             write_javascript(io, v)
-#             i != length(x) && print(io, ", ")
-#         end
-#         print(io,'}')
-#     end
-# end
-
 #-----------------------------------------------------------------------------# CSS
 struct CSS
     content::Dict{String, Dict{String,String}}
@@ -192,17 +158,11 @@ save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
 #-----------------------------------------------------------------------------# Page
 struct Page
     content
-    route::String
-    Page(content, route="/") = new(content, route)
-end
-function scratch_file(page::Page)
-    dir = mkpath(joinpath(DIR, split(page.route, '/', keepempty=false)...))
-    touch(joinpath(dir, "index.html"))
 end
 
 save(file::String, page::Page) = save(page, file)
 
-function save(page::Page, file=scratch_file(page))
+function save(page::Page, file=joinpath(DIR, "index.html"))
     Base.open(touch(file), "w") do io
         println(io, "<!doctype html>")
         show(io, MIME("text/html"), page.content)
@@ -210,9 +170,6 @@ function save(page::Page, file=scratch_file(page))
     file
 end
 
-function Base.display(::CobwebDisplay, page::Page)
-    save(page)
-    DefaultApplication.open(scratch_file(page))
-end
+Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 
 end #module

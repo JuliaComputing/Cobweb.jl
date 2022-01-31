@@ -27,4 +27,4 @@ page = h.html(
 
 index_html = touch(joinpath(mkpath(joinpath(@__DIR__, "build")), "index.html"))
 
-Cobweb.save(Page(page, "build"), index_html)
+Cobweb.save(Page(page), index_html)

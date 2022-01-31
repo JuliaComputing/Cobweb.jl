@@ -8,13 +8,12 @@ css = Dict(
     )
 )
 
-
 page = h.html(
     h.head(
         h.meta(charset="UTF-8"),
         h.meta(name="viewport", content="width=device-width, initial-scale=1.0"),
         h.title("Cobweb.jl Docs"),
-        CSS(css)
+        CSS(css),
     ),
     h.body(
         h.h1("This page was built with ", h.code("Cobweb.jl"), "."),
@@ -25,6 +24,6 @@ page = h.html(
     )
 )
 
-Cobweb.write_html(Page(page))
+index_html = touch(joinpath(mkpath(joinpath(@__DIR__, "build")), "index.html"))
 
-cp(Cobweb.htmlfile, joinpath(mkpath(joinpath(@__DIR__, "build")), "index.html"), force=true)
+Cobweb.save(Page(page, "build"), index_html)

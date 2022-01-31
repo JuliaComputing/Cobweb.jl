@@ -32,7 +32,9 @@ end
 #-----------------------------------------------------------------------------#
 @testset "Page" begin
     page = Page(n1)
-    @test isfile(Cobweb.htmlfile)
+    Cobweb.save(page)
+    @test isfile(joinpath(Cobweb.DIR, "index.html"))
+
     Cobweb.save(page, "temp.html")
     @test isfile("temp.html")
     rm("temp.html", force=true)
@@ -44,4 +46,10 @@ end
         @test char ∉ Cobweb.escape_html(join(chars))
     end
     @test Cobweb.escape_html("&") != "&"
+end
+#-----------------------------------------------------------------------------# docs
+@testset "Docs Build" begin
+    include(joinpath(@__DIR__, "..", "docs", "make.jl"))
+    @test isfile(joinpath(@__DIR__, "..", "docs", "build", "index.html"))
+    rm(joinpath(@__DIR__, "..", "docs", "build"), recursive=true)
 end

@@ -4,18 +4,25 @@ using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 
 #-----------------------------------------------------------------------------# init
-htmlfile = ""  # path to cobweb.html
 struct CobwebDisplay <: AbstractDisplay end
 
 function __init__()
-    global htmlfile = touch(joinpath(@get_scratch!("CobWeb"), "cobweb.html"))
+    global DIR = @get_scratch!("CobWeb")
     pushdisplay(CobwebDisplay())
 end
+
+#-----------------------------------------------------------------------------# File
+struct File
+    path::String
+    builddir::String
+    File(path::String, builddir::String = "assets/") = new(path, builddir)
+end
+Base.show(io::IO, file::File) = file.buildir * file.path
 
 #-----------------------------------------------------------------------------# Node
 struct Node
     tag::String
-    attrs::Dict{String,String}
+    attrs::Dict{String,Union{File, String}}
     children::Vector
     function Node(tag, attrs, children)
         new(tag, attrs, children)
@@ -27,7 +34,7 @@ function Base.getproperty(node::Node, class::String)
     node
 end
 
-get_attrs(kw) = Dict(string(k) => string(v) for (k,v) in kw)
+get_attrs(kw) = Dict(string(k) => v isa File ? v : string(v) for (k,v) in kw)
 
 (node::Node)(children...; kw...) = Node(node.tag, merge(node.attrs, get_attrs(kw)), vcat(node.children, children...))
 
@@ -171,26 +178,28 @@ end
 
 #-----------------------------------------------------------------------------# Page
 struct Page
-    x
+    content
+    route::String
+    Page(content, route="/") = new(content, route)
+end
+function scratch_file(page::Page)
+    dir = mkpath(joinpath(DIR, split(page.route, '/', keepempty=false)...))
+    touch(joinpath(dir, "index.html"))
 end
 
-save(page::Page, file::String) = save(file, page)
+save(file::String, page::Page) = save(page, file)
 
-function save(file::String, page::Page)
-    write_html(page)
-    mv(htmlfile, file)
-end
-
-function write_html(page::Page)
-    Base.open(htmlfile, "w") do io
+function save(page::Page, file=scratch_file(page))
+    Base.open(file, "w") do io
         println(io, "<!doctype html>")
-        show(io, MIME("text/html"), page.x)
+        show(io, MIME("text/html"), page.content)
     end
+    file
 end
 
 function Base.display(::CobwebDisplay, page::Page)
-    write_html(page)
-    DefaultApplication.open(htmlfile)
+    save(page)
+    DefaultApplication.open(scratch_file(page))
 end
 
 end #module

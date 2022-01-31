@@ -3,6 +3,7 @@ using Cobweb: h, Page, Node
 using Test
 
 n1 = h.div("hi")
+n2 = h("div", "hi")
 
 #-----------------------------------------------------------------------------#
 @testset "Node Creation" begin
@@ -20,6 +21,7 @@ n1 = h.div("hi")
     node = h.h1()."class"("c1", "c2")
     @test node.attrs["class"] == "class"
     @test length(node.children) == 2
+    @test n1 == n2
 end
 #-----------------------------------------------------------------------------#
 @testset "HTML" begin
@@ -27,7 +29,7 @@ end
 end
 #-----------------------------------------------------------------------------#
 @testset "Javascript" begin
-    @test repr("text/javascript", n1) == """m("div", null, "hi")"""
+    @test repr("text/javascript", Cobweb.Javascript("x")) == "x"
 end
 #-----------------------------------------------------------------------------#
 @testset "Page" begin

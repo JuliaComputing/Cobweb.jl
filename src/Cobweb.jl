@@ -11,22 +11,21 @@ function __init__()
     pushdisplay(CobwebDisplay())
 end
 
-#-----------------------------------------------------------------------------# File
-struct File
-    path::String
-    builddir::String
-    File(path::String, builddir::String = "assets/") = new(path, builddir)
-end
-Base.show(io::IO, file::File) = file.buildir * file.path
-
 #-----------------------------------------------------------------------------# Node
 struct Node
     tag::String
-    attrs::Dict{String,Union{File, String}}
+    attrs::Dict{String,String}
     children::Vector
     function Node(tag, attrs, children)
         new(tag, attrs, children)
     end
+end
+
+function Base.:(==)(a::Node, b::Node)
+    a.tag == b.tag &&
+        a.attrs == b.attrs &&
+        length(a.children) == length(b.children) &&
+        all(ac == bc for (ac,bc) in zip(a.children, b.children))
 end
 
 function Base.getproperty(node::Node, class::String)
@@ -34,7 +33,7 @@ function Base.getproperty(node::Node, class::String)
     node
 end
 
-get_attrs(kw) = Dict(string(k) => v isa File ? v : string(v) for (k,v) in kw)
+get_attrs(kw) = Dict(string(k) => string(v) for (k,v) in kw)
 
 (node::Node)(children...; kw...) = Node(node.tag, merge(node.attrs, get_attrs(kw)), vcat(node.children, children...))
 
@@ -48,6 +47,7 @@ function Base.getproperty(::typeof(h), tag::Symbol)
     return f
 end
 
+# TODO: Something smarter than flat-out replacing symbols
 macro h(ex)
     esc(_h(ex))
 end
@@ -130,34 +130,40 @@ function Base.show(io::IO, ::MIME"text/html", j::Javascript)
     print(io, "</script>")
 end
 
-function Base.show(io::IO, M::MIME"text/javascript", node::Node)
-    print(io, "m(\"", node.tag, "\", ")
-    write_javascript(io, node.attrs)
-    for child in node.children
-        print(io, ", ")
-        write_javascript(io, child)
-    end
-    print(io, ")")
-end
+# #-----------------------------------------------------------------------------# Virtual DOM
+# function Base.show(io::IO, M::MIME"text/javascript", node::Node)
+#     print(io, "{type:\"", node.tag, "\",props:")
+#     children = length(node.children) == 1 ? node.children[1] : node.children
+#     write_javascript(io, merge(node.attrs, Dict("children" => children)))
+#     print(io, '}')
+# end
 
-write_javascript(io::IO, x) = show(io, MIME"text/javascript"(), x)
+# write_javascript(io::IO, x) = show(io, MIME"text/javascript"(), x)
 
-write_javascript(io::IO, ::Nothing) = print(io, "null")
-write_javascript(io::IO, x::String) = print(io, '"', x, '"')
-write_javascript(io::IO, x::Union{Bool, Real}) = print(io, x)
-function write_javascript(io::IO, x::AbstractDict)
-    if isempty(x)
-        print(io, "null")
-    else
-        print(io, '{')
-        for (i,(k,v)) in enumerate(x)
-            print(io, k, ':')
-            write_javascript(io, v)
-            i != length(x) && print(io, ", ")
-        end
-        print(io,'}')
-    end
-end
+# write_javascript(io::IO, ::Nothing) = print(io, "null")
+# write_javascript(io::IO, x::String) = print(io, '"', x, '"')
+# write_javascript(io::IO, x::Union{Bool, Real}) = print(io, x)
+# function write_javascript(io::IO, x::AbstractArray)
+#     print(io, '[')
+#     for (i,x) in enumerate(x)
+#         write_javascript(io, x)
+#         i != length(x) && print(io, ',')
+#     end
+#     print(io, ']')
+# end
+# function write_javascript(io::IO, x::AbstractDict)
+#     if isempty(x)
+#         print(io, "null")
+#     else
+#         print(io, '{')
+#         for (i,(k,v)) in enumerate(x)
+#             print(io, k, ':')
+#             write_javascript(io, v)
+#             i != length(x) && print(io, ", ")
+#         end
+#         print(io,'}')
+#     end
+# end
 
 #-----------------------------------------------------------------------------# CSS
 struct CSS
@@ -180,6 +186,8 @@ function Base.show(io::IO, ::MIME"text/html", o::CSS)
     print(io, o)
     println(io, "</style>")
 end
+save(file::String, o::CSS) = save(o, file)
+save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
 
 #-----------------------------------------------------------------------------# Page
 struct Page
@@ -195,7 +203,7 @@ end
 save(file::String, page::Page) = save(page, file)
 
 function save(page::Page, file=scratch_file(page))
-    Base.open(file, "w") do io
+    Base.open(touch(file), "w") do io
         println(io, "<!doctype html>")
         show(io, MIME("text/html"), page.content)
     end

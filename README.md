@@ -44,8 +44,10 @@ h.div()."text-center text-xl"(
     - `h.div(hidden=true)` --> `<div hidden></div>`
     - `h.div(hidden=false)` --> `<div></div>`
 
+<br>
+<br>
 
-### The `@h` macro
+## The `@h` macro
 
 This is a simple utility macro that replaces symbols `f` with `Cobweb.h.f` for a cleaner syntax:
 
@@ -71,40 +73,7 @@ end
 <br>
 
 
-## 📄 Writing Javascript
-
-- `Cobweb.Node`s can be represented as a Javascript object that many libraries use internally to
-represent nodes (e.g. [React.js](https://reactjs.org), [Preact.js](https://preactjs.com), and [Mithril.js](https://mithril.js.org)):
-
-```javascript
-{tag, attrs, child1, child2, ...}
-```
-
-- Example
-
-```julia
-using Cobweb: h
-
-node = h.div(h.p("paragraph 1"), h.p("paragraph 2"), class="text-center")
-
-print(repr("text/javascript", node))
-```
-
-```
-m("div", {class:"text-center"}, m("p", null, "paragraph 1"), m("p", null, "paragraph 2"))
-```
-
-- If you were writing this node into a React script for example, you'd want it to look something like:
-
-```javascript
-const m = React.createElement
-
-const app = ... // repr("text/javascript", node)
-
-ReactDOM.render(app, document.getElementById('root'));
-```
-
-### `Cobweb.Javascript`
+## 📄 Writing Javascript with `Cobweb.Javascript`
 
 - Simple wrapper around a `String` that gets printed verbatim with `MIME"text/javascript"`.
 - The following create the same result represented with `MIME"text/html"`:

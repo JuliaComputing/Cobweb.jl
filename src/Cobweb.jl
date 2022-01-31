@@ -124,6 +124,11 @@ struct Javascript
     x::String
 end
 Base.show(io::IO, ::MIME"text/javascript", j::Javascript) = print(io, j.x)
+function Base.show(io::IO, ::MIME"text/html", j::Javascript)
+    print(io, "<script>")
+    print(io, j.x)
+    print(io, "</script>")
+end
 
 function Base.show(io::IO, M::MIME"text/javascript", node::Node)
     print(io, "m(\"", node.tag, "\", ")

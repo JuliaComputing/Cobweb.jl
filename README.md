@@ -102,6 +102,13 @@ const app = ... // repr("text/javascript", node)
 ReactDOM.render(app, document.getElementById('root'));
 ```
 
+### `Cobweb.Javascript`
+
+- Simple wrapper around a `String` that gets printed verbatim with `MIME"text/javascript"`.
+- The following create the same result represented with `MIME"text/html"`:
+    - `h.script("alert('hi')")`
+    - Adding `Cobweb.Javascript("alert('hi')")`
+
 <br>
 <br>
 

@@ -19,8 +19,9 @@ page = h.html(
         h.h1("This page was built with ", h.code("Cobweb.jl"), "."),
         Markdown.parse("""
         Take a look at [`docs/make.jl`](https://github.com/joshday/Cobweb.jl/blob/main/docs/make.jl) inside the [`Cobweb.jl` repo](https://github.com/joshday/Cobweb.jl).
-        """)
-
+        """),
+        h.button("Click Me for an alert!", onclick="buttonClicked()"),
+        Cobweb.Javascript("const buttonClicked = () => alert('This button was clicked!')"),
     )
 )
 

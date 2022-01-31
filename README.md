@@ -79,7 +79,7 @@ end
 ## 📄 Writing Javascript with `Cobweb.Javascript`
 
 - Simple wrapper around a `String` that gets printed verbatim with `MIME"text/javascript"`.
-- The following create the same result represented with `MIME"text/html"`:
+- The following create the same result when represented with `MIME"text/html"`:
     - `h.script("alert('hi')")`
     - Adding `Cobweb.Javascript("alert('hi')")`
 

@@ -1,3 +1,5 @@
+[![CI](https://github.com/joshday/Cobweb.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/joshday/Cobweb.jl/actions/workflows/CI.yml)
+
 <h1 align="center">🕸️ Cobweb</h1>
 
 <h4 align="center">A Julia package for <b>cob</b>bling together <b>web</b> pages.</h4>

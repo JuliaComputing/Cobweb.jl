@@ -147,6 +147,7 @@ function Base.show(io::IO, o::CSS)
         println(io, '}')
     end
 end
+Base.show(io::IO, ::MIME"text/css", o::CSS) = print(io, o)
 function Base.show(io::IO, ::MIME"text/html", o::CSS)
     println(io, "<style>")
     print(io, o)

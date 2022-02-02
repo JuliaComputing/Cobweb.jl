@@ -1,4 +1,5 @@
 [![CI](https://github.com/joshday/Cobweb.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/joshday/Cobweb.jl/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/joshday/Cobweb.jl/branch/main/graph/badge.svg?token=yrcRI2ZETk)](https://codecov.io/gh/joshday/Cobweb.jl)
 
 <h1 align="center">🕸️ Cobweb</h1>
 

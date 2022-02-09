@@ -34,6 +34,7 @@ end
 #-----------------------------------------------------------------------------# Page
 @testset "Page" begin
     page = Page(n1)
+    @test Page(page) == page
     Cobweb.save(page)
     @test isfile(joinpath(Cobweb.DIR, "index.html"))
 

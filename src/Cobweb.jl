@@ -160,6 +160,7 @@ save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
 struct Page
     content
 end
+Page(pg::Page) = pg
 
 save(file::String, page::Page) = save(page, file)
 

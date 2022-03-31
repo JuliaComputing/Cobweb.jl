@@ -176,12 +176,4 @@ end
 
 Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 
-#-----------------------------------------------------------------------------# read
-read(io::IO) = read(read(io, String))
-
-function read(s::AbstractString)
-    out = []
-
-end
-
 end #module

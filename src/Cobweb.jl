@@ -8,7 +8,6 @@ struct CobwebDisplay <: AbstractDisplay end
 
 function __init__()
     global DIR = @get_scratch!("CobWeb")
-    # global BUILD = joinpath(DIR, "build")
     pushdisplay(CobwebDisplay())
 end
 

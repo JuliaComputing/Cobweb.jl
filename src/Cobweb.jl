@@ -8,7 +8,7 @@ struct CobwebDisplay <: AbstractDisplay end
 
 function __init__()
     global DIR = @get_scratch!("CobWeb")
-    global BUILD = joinpath(DIR, "build")
+    # global BUILD = joinpath(DIR, "build")
     pushdisplay(CobwebDisplay())
 end
 
@@ -68,11 +68,11 @@ end
 #-----------------------------------------------------------------------------# escapeHTML
 # Taken from HTTPCommon.jl (ref: http://stackoverflow.com/a/7382028/3822752)
 function escape_html(x::String)
-    s = replace(x,  "&"=>"&amp;")
-    s = replace(s, "\""=>"&quot;")
-    s = replace(s, "'"=>"&#39;")
-    s = replace(s, "<"=>"&lt;")
-    replace(s, ">"=>"&gt;")
+    s = replace(x,  '&' => "&amp;")
+    s = replace(s, '"' => "&quot;")
+    s = replace(s, ''' => "&#39;")
+    s = replace(s, '<' => "&lt;")
+    replace(s, '>' => "&gt;")
 end
 
 #-----------------------------------------------------------------------------# show (html)
@@ -119,6 +119,8 @@ function Base.show(io::IO, node::Node)
     pretty && println(io)
 end
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
+Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, node)
+Base.show(io::IO, ::MIME"application/xml", node::Node) = show(io, node)
 
 #-----------------------------------------------------------------------------# show (javascript)
 struct Javascript
@@ -173,5 +175,13 @@ function save(page::Page, file=joinpath(DIR, "index.html"))
 end
 
 Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
+
+#-----------------------------------------------------------------------------# read
+read(io::IO) = read(read(io, String))
+
+function read(s::AbstractString)
+    out = []
+
+end
 
 end #module

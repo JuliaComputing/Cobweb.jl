@@ -120,7 +120,7 @@ end
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"application/xml", node::Node) = show(io, node)
-Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, node)
+# Base.show(io::IO, ::MIME"juliavscode/html", node::Node) = show(io, node)
 
 #-----------------------------------------------------------------------------# show (javascript)
 struct Javascript

@@ -2,6 +2,7 @@ module Cobweb
 
 using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
+using StructTypes
 
 export Node, Page
 
@@ -173,5 +174,11 @@ function save(page::Page, file=joinpath(DIR, "index.html"))
 end
 
 Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
+
+#-----------------------------------------------------------------------------# StructTypes
+StructTypes.StructType(::Type{Node})        = StructTypes.Struct()
+StructTypes.StructType(::Type{Javascript})  = StructTypes.Struct()
+StructTypes.StructType(::Type{CSS})         = StructTypes.Struct()
+StructTypes.StructType(::Type{Page})        = StructTypes.Struct()
 
 end #module

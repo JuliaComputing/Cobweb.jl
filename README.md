@@ -89,7 +89,7 @@ end
 <br>
 <br>
 
-## CSS
+## 📄 Writing CSS with `Cobweb.CSS`
 
 You can create `Cobweb.CSS` from any `AbstractDict`:
 - `selector => AbstractDict (property => value)`.

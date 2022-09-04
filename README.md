@@ -7,17 +7,16 @@
 
 # 🆒 Features
 
-- Instantly open any `"text/html"`-representable object inside your browser with `Cobweb.Page(x)`.
-- Easily create web content with `Cobweb.h(tag, content...; attrs...)`.
+- Open any `"text/html"`-representable object in your browser with `Cobweb.Page(x)`.
+- Easily create web content with `Cobweb.h(tag, children...; attrs...)`.
 - Small and hackable (<200 lines).
-- Take advantage of Julia types that have a `MIME("text/html")` representation.
 
 <br>
 <br>
 
 # ✨ Creating Nodes with `Cobweb.h`
 
-- The syntax for `Cobweb.h` is designed to look similar to html.
+- The syntax for `Cobweb.h` looks similar to html.
 
 ```julia
 using Cobweb: h
@@ -84,7 +83,7 @@ end
 - Simple wrapper around a `String` that gets printed verbatim with `MIME"text/javascript"`.
 - The following create the same result when represented with `MIME"text/html"`:
     - `h.script("alert('hi')")`
-    - Adding `Cobweb.Javascript("alert('hi')")`
+    - `Cobweb.Javascript("alert('hi')")`
 
 <br>
 <br>
@@ -94,8 +93,6 @@ end
 You can create `Cobweb.CSS` from any `AbstractDict`:
 - `selector => AbstractDict (property => value)`.
 - We like using [`EasyConfig.Config`](https://github.com/joshday/EasyConfig.jl) for this.
-- `Cobweb.CSS` can be included directly (because of its `MIME("text/html")` show method).  You can
-  also write to a file with `open(io -> show(io, css), mycssfile)`.
 
 ```julia
 using EasyConfig
@@ -103,9 +100,20 @@ using Cobweb: h
 
 css = Config()
 
-css.p."font-family" = "Arial"
+css."p"."font-family" = "Arial"
 css."p.upper"."text-transform"= "uppercase"
 css."p.blue".color = "blue"
+
+
+# p {
+#     font-family: Arial;
+# }
+# p.upper {
+#     text-transform: uppercase;
+# }
+# p.blue {
+#     color: blue;
+# }
 
 page = h.html(
     h.head(Cobweb.CSS(css)),

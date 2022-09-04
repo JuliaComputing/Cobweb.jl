@@ -9,7 +9,7 @@
 
 - Instantly open any `"text/html"`-representable object inside your browser with `Cobweb.Page(x)`.
 - Easily create web content with `Cobweb.h(tag, content...; attrs...)`.
-- Small and hackable (~200 lines).
+- Small and hackable (<200 lines).
 - Take advantage of Julia types that have a `MIME("text/html")` representation.
 
 <br>

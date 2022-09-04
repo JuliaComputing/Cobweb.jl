@@ -3,6 +3,8 @@ module Cobweb
 using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 
+export Node, Page
+
 #-----------------------------------------------------------------------------# init
 struct CobwebDisplay <: AbstractDisplay end
 
@@ -127,11 +129,7 @@ struct Javascript
     x::String
 end
 Base.show(io::IO, ::MIME"text/javascript", j::Javascript) = print(io, j.x)
-function Base.show(io::IO, ::MIME"text/html", j::Javascript)
-    print(io, "<script>")
-    print(io, j.x)
-    print(io, "</script>")
-end
+Base.show(io::IO, ::MIME"text/html", j::Javascript) = print(io, "<script>", j.x, "</script>")
 
 #-----------------------------------------------------------------------------# CSS
 struct CSS

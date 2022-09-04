@@ -30,6 +30,7 @@ end
 #-----------------------------------------------------------------------------# Javascript
 @testset "Javascript" begin
     @test repr("text/javascript", Cobweb.Javascript("x")) == "x"
+    @test repr("text/html", Cobweb.Javascript("x")) == "<script>x</script>"
 end
 #-----------------------------------------------------------------------------# Page
 @testset "Page" begin

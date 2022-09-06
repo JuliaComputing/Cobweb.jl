@@ -87,7 +87,7 @@ julia> node."change classes"
 
 - `Bool`s are special-cased:
 
-```
+```julia
 julia> h.div(hidden=true)
 # <div hidden></div>
 
@@ -117,13 +117,6 @@ end
 # </div>
 ```
 
-
-<br>
-<br>
-
-## 📄 Writing HTML
-
-- A `Cobweb.Node` (what gets created by `Cobweb.h`) displays in the REPL as HTML.  This is the same representation that gets used by: `Base.show(::IO, ::MIME"text/html", ::Node)`.  You can add whitespace/indentation with `Cobweb.pretty(::IO, ::Node)`.
 
 <br>
 <br>

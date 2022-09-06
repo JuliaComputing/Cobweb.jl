@@ -4,7 +4,7 @@ using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 using StructTypes
 
-export Node, Page
+export Page
 
 #-----------------------------------------------------------------------------# init
 struct CobwebDisplay <: AbstractDisplay end
@@ -45,10 +45,7 @@ h(tag, children...; kw...) = Node(tag, get_attrs(kw), collect(children))
 
 h(tag, attrs::Dict, children...) = Node(tag, attrs, collect(children))
 
-function Base.getproperty(::typeof(h), tag::Symbol)
-    f(children...; kw...) = h(String(tag), children...; kw...)
-    return f
-end
+Base.getproperty(::typeof(h), tag::Symbol) = h(string(tag))
 
 # TODO: Something smarter than flat-out replacing symbols
 macro h(ex)

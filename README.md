@@ -8,7 +8,12 @@
 # 🆒 Features
 
 - Open any `"text/html"`-representable object in your browser with `Cobweb.Page(x)`.
-- Easily create web content with `Cobweb.h(tag, children...; attrs...)`.
+- Easily create web content in Julia:
+
+```julia
+h.div(;id ="myid", class="text-center")("child")
+# <div class="text-center" id="myid">child</div>
+```
 - Small and hackable (<200 lines).
 
 <br>
@@ -16,38 +21,96 @@
 
 # ✨ Creating Nodes with `Cobweb.h`
 
-- The syntax for `Cobweb.h` looks similar to html.
+- Syntax is similar to HTML:
 
 ```julia
 using Cobweb: h
-using Markdown
 
-h.div()."text-center text-xl"(
-    h.h3("This generates an h3 node!"; class="you_can_add_classes_this_way_too", id="or_any_other_attribute"),
-    h.p("This is a paragraph."),
-    h.div(Markdown.parse("- I can put any text/html-representable type in here! and will \"just work\"™"))
+h.div."some-class"(
+    h.p("This is a child."),
+    h.div("So is this.")
 )
+# <div class="some-class">
+#   <p>This is a child.</p>
+#   <div>So is this.</div>
+# </div>
 ```
 
-<div class="text-center text-xl"><h3 class="you_can_add_classes_this_way_too" id="or_any_other_attribute">This generates an h3 node!</h3><p>This is a paragraph.</p><div><div class="markdown"><ul>
-<li><p>I can put any text/html-representable type in here&#33; and will &quot;just work&quot;™</p>
-</li>
-</ul>
-</div></div></div>
+- Any `AbstractString` children will be inserted verbatim.
+- Everything else will use the `MIME"text/html"` representation.
+
+```julia
+h.div(
+    "Here is markdown:",
+    Markdown.parse("""
+    - This \"just work\"™s!
+    """)
+)
+# <div>
+#   Here is markdown:
+#   <div class="markdown">
+#     <ul>
+#       <li>
+#         <p>This &quot;just work&quot;™s&#33;</p>
+#       </li>
+#     </ul>
+#   </div>
+# </div>
+```
+
+- The above code copied/pasted into this README:
+
+<div>
+  Here is markdown:
+  <div class="markdown">
+    <ul>
+      <li>
+        <p>This &quot;just work&quot;™s&#33;</p>
+      </li>
+    </ul>
+  </div>
+</div>
 
 <br>
 <br>
 
 ## `Cobweb.h` Syntax Summary:
 
-- `node = h(tag, children...; attrs...)`
-- `node = h.tag(children...; attrs...)`
-- `node."add_class"`
-- `node("add", "children")`
-- `node.attrs["some_attribute"] = "add an attribute"`
-- `Bool` attributes are special cased:
-    - `h.div(hidden=true)` --> `<div hidden></div>`
-    - `h.div(hidden=false)` --> `<div></div>`
+- `h.<tag>` creates a `Cobweb.Node`:
+
+```julia
+julia> h.div
+# <div></div>
+```
+
+- `Node`s are callable!
+  - Positional arguments add children:
+```julia
+julia> h.div("child")
+# <div>child</div>
+```
+  - Keyword arguments add attributes:
+```julia
+julia> h.div(; id = "myid")
+# <div id="myid"></div>
+```
+
+- There's convenient syntax for changing classes as well:
+```julia
+julia> node."change classes"
+# <div class="change classes"></div>
+```
+
+
+- `Bool`s are special-cased:
+
+```
+julia> h.div(hidden=true)
+# <div hidden></div>
+
+julia> h.div(hidden=false)
+# <div></div>
+```
 
 <br>
 <br>
@@ -58,12 +121,17 @@ This is a simple utility macro that replaces symbols `f` with `Cobweb.h.f` for a
 
 ```julia
 Cobweb.@h begin
-    div()."text-center text-xl"(
+    div."text-center text-xl"(
         h4("This generates an h4 node!"),
         p("This is a paragraph"),
         div("Here is a div.")
     )
 end
+# <div class="text-center text-xl">
+#   <h4>This generates an h4 node!</h4>
+#   <p>This is a paragraph</p>
+#   <div>Here is a div.</div>
+# </div>
 ```
 
 

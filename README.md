@@ -11,6 +11,30 @@
 - Easily create web content in Julia.
 - Small and hackable (<200 lines).
 
+<br><br>
+
+## 🏃 Quickstart
+
+```julia
+using Cobweb: h, Page
+
+page = h.html(
+    h.head(
+        h.meta(charset="UTF-8"),
+        h.meta(name="viewport", content="width=device-width, initial-scale=1.0"),
+        h.title("Page Title")
+    ),
+    h.body(
+        h.h1("This is my page title."),
+        h.p("This is a paragraph."),
+        h.button("Click Me for an alert!", onclick="buttonClicked()"),
+        Cobweb.Javascript("const buttonClicked = () => alert('This button was clicked!')"),
+    )
+)
+
+Page(page)  # Open in browser
+```
+
 <br>
 <br>
 
@@ -173,27 +197,7 @@ Cobweb.Page(page)
 <br>
 <br>
 
-## 🏃 Quickstart
 
-```julia
-using Cobweb: h, Page
-
-page = h.html(
-    h.head(
-        h.meta(charset="UTF-8"),
-        h.meta(name="viewport", content="width=device-width, initial-scale=1.0"),
-        h.title("Page Title")
-    ),
-    h.body(
-        h.h1("This is my page title."),
-        h.p("This is a paragraph."),
-        h.button("Click Me for an alert!", onclick="buttonClicked()"),
-        Cobweb.Javascript("const buttonClicked = () => alert('This button was clicked!')"),
-    )
-)
-
-Page(page)  # Open in browser
-```
 
 ## Attribution
 

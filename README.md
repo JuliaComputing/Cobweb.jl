@@ -13,7 +13,7 @@
 
 <br><br>
 
-## 🏃 Quickstart
+## 🚀 Quickstart
 
 ```julia
 using Cobweb: h, Page

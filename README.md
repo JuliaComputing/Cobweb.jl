@@ -8,12 +8,7 @@
 # 🆒 Features
 
 - Open any `"text/html"`-representable object in your browser with `Cobweb.Page(x)`.
-- Easily create web content in Julia:
-
-```julia
-h.div(;id ="myid", class="text-center")("child")
-# <div class="text-center" id="myid">child</div>
-```
+- Easily create web content in Julia.
 - Small and hackable (<200 lines).
 
 <br>
@@ -58,18 +53,6 @@ h.div(
 # </div>
 ```
 
-- The above code copied/pasted into this README:
-
-<div>
-  Here is markdown:
-  <div class="markdown">
-    <ul>
-      <li>
-        <p>This &quot;just work&quot;™s&#33;</p>
-      </li>
-    </ul>
-  </div>
-</div>
 
 <br>
 <br>
@@ -84,16 +67,16 @@ julia> h.div
 ```
 
 - `Node`s are callable!
-  - Positional arguments add children:
-```julia
-julia> h.div("child")
-# <div>child</div>
-```
-  - Keyword arguments add attributes:
-```julia
-julia> h.div(; id = "myid")
-# <div id="myid"></div>
-```
+    - Positional arguments add children:
+    ```julia
+    julia> h.div("child")
+    # <div>child</div>
+    ```
+    - Keyword arguments add attributes:
+    ```julia
+    julia> h.div(; id = "myid")
+    # <div id="myid"></div>
+    ```
 
 - There's convenient syntax for changing classes as well:
 ```julia

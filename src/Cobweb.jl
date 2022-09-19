@@ -47,7 +47,9 @@ h(tag, attrs::Dict, children...) = Node(tag, attrs, collect(children))
 
 Base.getproperty(::typeof(h), tag::Symbol) = h(string(tag))
 
-# TODO: Something smarter than flat-out replacing symbols
+#-----------------------------------------------------------------------------# @h
+HTML5_TAGS = [:a,:abbr,:address,:area,:article,:aside,:audio,:b,:base,:bdi,:bdo,:blockquote,:body,:br,:button,:canvas,:caption,:cite,:code,:col,:colgroup,:data,:datalist,:dd,:del,:details,:dfn,:dialog,:div,:dl,:dt,:em,:embed,:fieldset,:figcaption,:figure,:footer,:form,:h1,:h2,:h3,:h4,:h5,:h6,:head,:header,:hgroup,:hr,:html,:i,:iframe,:img,:input,:ins,:kbd,:label,:legend,:li,:link,:main,:map,:mark,:math,:menu,:menuitem,:meta,:meter,:nav,:noscript,:object,:ol,:optgroup,:option,:output,:p,:param,:picture,:pre,:progress,:q,:rb,:rp,:rt,:rtc,:ruby,:s,:samp,:script,:section,:select,:slot,:small,:source,:span,:strong,:style,:sub,:summary,:sup,:svg,:table,:tbody,:td,:template,:textarea,:tfoot,:th,:thead,:time,:title,:tr,:track,:u,:ul,:var,:video,:wbr]
+
 macro h(ex)
     esc(_h(ex))
 end
@@ -57,22 +59,17 @@ function _h(ex::Expr)
         x = ex.args[i]
         if x isa Expr
             ex.args[i] = _h(x)
-        elseif x isa Symbol
+        elseif x isa Symbol && x in HTML5_TAGS
             ex.args[i] = Expr(:., :(Cobweb.h), QuoteNode(ex.args[1]))
         end
     end
     ex
 end
+_h(x::Symbol) = x in HTML5_TAGS ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
 
 #-----------------------------------------------------------------------------# escapeHTML
 # Taken from HTTPCommon.jl (ref: http://stackoverflow.com/a/7382028/3822752)
-function escape_html(x::String)
-    s = replace(x,  '&' => "&amp;")
-    s = replace(s, '"' => "&quot;")
-    s = replace(s, ''' => "&#39;")
-    s = replace(s, '<' => "&lt;")
-    replace(s, '>' => "&gt;")
-end
+escape_html(x::String) = replace(x, '&' => "&amp;",'"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;")
 
 #-----------------------------------------------------------------------------# show (html)
 pretty(x) = (io = IOBuffer(); pretty(io, x); String(take!(io)))

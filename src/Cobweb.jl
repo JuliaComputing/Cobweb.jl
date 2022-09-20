@@ -19,9 +19,6 @@ struct Node
     tag::String
     attrs::Dict{String,String}
     children::Vector
-    function Node(tag, attrs, children)
-        new(tag, attrs, children)
-    end
 end
 
 function Base.:(==)(a::Node, b::Node)
@@ -69,55 +66,39 @@ _h(x::Symbol) = x in HTML5_TAGS ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
 
 #-----------------------------------------------------------------------------# escapeHTML
 # Taken from HTTPCommon.jl (ref: http://stackoverflow.com/a/7382028/3822752)
-escape_html(x::String) = replace(x, '&' => "&amp;",'"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;")
+escape_html(x) = replace(string(x), '&' => "&amp;",'"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;")
 
 #-----------------------------------------------------------------------------# show (html)
-pretty(x) = (io = IOBuffer(); pretty(io, x); String(take!(io)))
-
-pretty(io::IO, node::Node) = show(IOContext(io, :pretty=>true), node)
-
 function Base.show(io::IO, node::Node)
     color = get(io, :tagcolor, 1)
-    pretty = get(io, :pretty, false)
-    level = pretty ? get(io, :level, 0) : 0
-    indent = pretty ? ' ' ^ get(io, :indent, 2) : ""
     p(args...) = printstyled(io, args...; color)
-    p(indent ^ level, '<', node.tag)
+    # opening tag
+    p('<', node.tag,)
     for (k,v) in node.attrs
         if v == "true"
             p(' ', k)
-        elseif v == "false"
-        else
+        elseif v != "false"
             p(' ', k, '=', '"', v, '"')
         end
     end
     p('>')
-    has_node_children = any(x -> x isa Node, node.children)
-    pretty && has_node_children && p('\n')
-    n_nodes = 0
+    # children
     for (i, child) in enumerate(node.children)
-        if child isa String
-            has_node_children ?
-                p(indent ^ (level + 1), escape_html(child), '\n') :
-                p(escape_html(child))
-        elseif child isa Node
-            show(IOContext(io, :tagcolor => color + i + n_nodes, :level => level+1), MIME("text/html"), child)
-            n_nodes = sum(x -> x isa Node, child.children, init=0)
+        if child isa Union{AbstractString, Number, Symbol}
+            p(child)
         else
-            show(io, MIME("text/html"), child)
+            show(IOContext(io, :tagcolor => color + i), MIME("text/html"), child)
         end
     end
-    if has_node_children
-        p(indent ^ level, "</", node.tag, '>')
-    else
-        p("</", node.tag, '>')
-    end
-    pretty && println(io)
+    # closing tag
+    p("</", node.tag, '>')
 end
+
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"application/xml", node::Node) = show(io, node)
-# Base.show(io::IO, ::MIME"juliavscode/html", node::Node) = show(io, node)
+
+pretty(args...) = error("The `pretty` function has been removed from Cobweb.")
 
 #-----------------------------------------------------------------------------# show (javascript)
 struct Javascript

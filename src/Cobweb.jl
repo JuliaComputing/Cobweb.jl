@@ -133,6 +133,10 @@ end
 save(file::String, o::CSS) = save(o, file)
 save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
 
+#-----------------------------------------------------------------------------# Doctype
+struct Doctype end
+Base.show(io::IO, ::MIME"text/html", o::Doctype) where {T} = print(io, "<!DOCTYPE html>")
+
 #-----------------------------------------------------------------------------# Page
 struct Page
     content
@@ -150,6 +154,8 @@ function save(page::Page, file=joinpath(DIR, "index.html"))
 end
 
 Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
+
+Base.show(io::IO, ::MIME"text/html", p::Page) = print(io, "<iframe src=$(save(p, tempname(DIR))) />")
 
 #-----------------------------------------------------------------------------# StructTypes
 StructTypes.StructType(::Type{Node})        = StructTypes.Struct()

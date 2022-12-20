@@ -155,12 +155,11 @@ end
 
 Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 
-Base.show(io::IO, ::MIME"text/html", p::Page) = print(io, "<iframe src=$(save(p, tempname(DIR))) />")
-
 #-----------------------------------------------------------------------------# StructTypes
 StructTypes.StructType(::Type{Node})        = StructTypes.Struct()
 StructTypes.StructType(::Type{Javascript})  = StructTypes.Struct()
 StructTypes.StructType(::Type{CSS})         = StructTypes.Struct()
+StructTypes.StructType(::Type{Doctype})     = StructTypes.Struct()
 StructTypes.StructType(::Type{Page})        = StructTypes.Struct()
 
 end #module

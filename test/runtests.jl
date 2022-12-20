@@ -42,9 +42,6 @@ end
     Cobweb.save(page, "temp.html")
     @test isfile("temp.html")
     rm("temp.html", force=true)
-
-    Cobweb.save(Page(h.div("test", page)))
-    @test occursin("iframe", read(joinpath(Cobweb.DIR, "index.html"), String))
 end
 #-----------------------------------------------------------------------------# escaping
 @testset "escaping" begin

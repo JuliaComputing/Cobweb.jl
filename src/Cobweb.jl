@@ -173,6 +173,7 @@ Useful for embedding dynamically-generated content.
 """
 function iframe(x; height=250, width=750)
     id = randstring(10)
+    x = x isa Union{AbstractString, Number, Symbol} ? HTML(string(x)) : x
     h.div(
         h.div(repr("text/html", x); id="content-for-$id", style="display: none;"),
         h.iframe(; height, width, src="about:blank", style="border:none;", id),

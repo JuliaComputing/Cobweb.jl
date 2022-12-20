@@ -146,7 +146,9 @@ end
 
 ## Using Cobweb.jl with [Pluto.jl](https://github.com/fonsp/Pluto.jl)
 
-Use `Cobweb.iframe` to sandbox (without Pluto's CSS and JS) your content.
+- Use `Cobweb.iframe(x)` to sandbox (escape Pluto's CSS and JS) your content.
+- Rather than using a `src` attribute to embed a page (as with `h.iframe(src="myurl.html")`), the
+  html representation of `x` is used.
 
 ![](https://user-images.githubusercontent.com/8075494/208716692-7c5afc5c-ad51-40ea-9f54-7767cb2ac082.png)
 

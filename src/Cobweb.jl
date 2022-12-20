@@ -3,6 +3,7 @@ module Cobweb
 using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 using StructTypes
+using Random
 
 export Page
 
@@ -32,6 +33,7 @@ function Base.getproperty(node::Node, class::String)
     node.attrs["class"] = class
     node
 end
+Base.setproperty!(node::Node, name::Symbol, x) = getfield(node, :attrs)[string(name)] = string(x)
 
 get_attrs(kw) = Dict(string(k) => string(v) for (k,v) in kw)
 
@@ -135,7 +137,7 @@ save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
 
 #-----------------------------------------------------------------------------# Doctype
 struct Doctype end
-Base.show(io::IO, ::MIME"text/html", o::Doctype) where {T} = print(io, "<!DOCTYPE html>")
+Base.show(io::IO, ::MIME"text/html", o::Doctype) = print(io, "<!DOCTYPE html>")
 
 #-----------------------------------------------------------------------------# Page
 struct Page
@@ -161,5 +163,32 @@ StructTypes.StructType(::Type{Javascript})  = StructTypes.Struct()
 StructTypes.StructType(::Type{CSS})         = StructTypes.Struct()
 StructTypes.StructType(::Type{Doctype})     = StructTypes.Struct()
 StructTypes.StructType(::Type{Page})        = StructTypes.Struct()
+
+#-----------------------------------------------------------------------------# iframe
+"""
+    iframe(x)
+
+Create an <iframe> (without a `src`) using the text/html representation of `x
+Useful for embedding dynamically-generated content.
+"""
+function iframe(x; height=250, width=750)
+    id = randstring(10)
+    h.div(
+        h.div(repr("text/html", x); id="content-for-$id", style="display: none;"),
+        h.iframe(; height, width, src="about:blank", style="border:none;", id),
+        h.script("""
+        var content = document.getElementById("content-for-$id").innerHTML;
+        var iframe = document.getElementById("$id");
+
+        var frameDoc = iframe.document;
+        if (iframe.contentWindow)
+            frameDoc = iframe.contentWindow.document;
+
+        frameDoc.open();
+        frameDoc.writeln(content);
+        frameDoc.close();
+        """)
+    )
+end
 
 end #module

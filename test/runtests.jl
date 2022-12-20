@@ -22,6 +22,11 @@ n2 = h("div", "hi")
     @test node.attrs["class"] == "class"
     @test length(node.children) == 2
     @test n1 == n2
+
+    # edit attributes after creation
+    n = h.div("hi")
+    n.id = "someid"
+    @test n.attrs["id"] == "someid"
 end
 #-----------------------------------------------------------------------------# HTML
 @testset "HTML" begin

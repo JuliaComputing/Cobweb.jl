@@ -9,7 +9,7 @@
 
 - Open any `"text/html"`-representable object in your browser with `Cobweb.Page(x)`.
 - Easily create web content in Julia.
-- Small and hackable (<200 lines).
+- Lightweight, simple, and hackable.
 
 <br><br>
 

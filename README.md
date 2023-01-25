@@ -59,6 +59,8 @@ h.div."some-class"(
 - Everything else will use the `MIME"text/html"` representation.
 
 ```julia
+using Markdown
+
 h.div(
     "Here is markdown:",
     Markdown.parse("""
@@ -98,14 +100,14 @@ julia> h.div
     ```
     - Keyword arguments add attributes:
     ```julia
-    julia> h.div(; id = "myid")
+    julia> node = h.div(; id = "myid", class="myclass")
     # <div id="myid"></div>
     ```
 
-- There's convenient syntax for changing classes as well:
+- There's convenient syntax for appending classes as well:
 ```julia
-julia> node."change classes"
-# <div class="change classes"></div>
+julia> node."append classes"
+# <div class="myclass append classes" id="myid"></div>
 ```
 
 
@@ -124,7 +126,7 @@ julia> h.div(hidden=false)
 
 ## The `@h` macro
 
-This is a simple utility macro that replaces symbols `f` with `Cobweb.h.f` for a cleaner syntax:
+This is a simple utility macro that replaces each HTML5 tag `x` with `Cobweb.h.x` for a cleaner syntax:
 
 ```julia
 Cobweb.@h begin
@@ -207,7 +209,16 @@ Cobweb.Page(page)
 <br>
 <br>
 
+## Parsing HTML
 
+```julia
+using Downloads, Cobweb
+
+Cobweb.read(Downloads.download("https://juliacomputing.github.io/Cobweb.jl/"))
+```
+
+<br>
+<br>
 
 ## Attribution
 

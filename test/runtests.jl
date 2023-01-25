@@ -70,7 +70,14 @@ end
 
     input = Cobweb.read(joinpath(@__DIR__, "..", "docs", "build", "index.html"))
     @test input[1] == Cobweb.Doctype()
-    @test replace(string(page), isspace => "") == replace(string(input[2]), isspace => "")
 
     rm(joinpath(@__DIR__, "..", "docs", "build"), recursive=true)
+
+    @testset "roundtrip" begin
+        node = h.div("hi"; class="myclass", id="myid")
+        file = tempname()
+        Cobweb.save(file, Page(node))
+        node2 = Cobweb.read(file)[end]
+        @test node == node2
+    end
 end

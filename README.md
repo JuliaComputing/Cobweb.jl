@@ -55,7 +55,7 @@ h.div."some-class"(
 # </div>
 ```
 
-- Any `AbstractString` children will be inserted verbatim.
+- Any `Union{AbstractString, Symbol, Number}` children will be inserted verbatim.
 - Everything else will use the `MIME"text/html"` representation.
 
 ```julia
@@ -209,7 +209,7 @@ Cobweb.Page(page)
 <br>
 <br>
 
-## Parsing HTML
+## Parsing HTML to `Cobweb.Node`
 
 ```julia
 using Downloads, Cobweb

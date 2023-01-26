@@ -34,6 +34,8 @@ n2 = h("div", "hi")
     @test_throws BoundsError n[2]
     n[1] = "new"
     @test n[1] == "new"
+
+    @test_throws ErrorException display(h.div(nothing))
 end
 #-----------------------------------------------------------------------------# HTML
 @testset "HTML" begin

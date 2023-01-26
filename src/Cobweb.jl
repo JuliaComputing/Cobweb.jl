@@ -125,7 +125,9 @@ function Base.show(io::IO, node::Node)
         if child isa Union{AbstractString, Number, Symbol}
             p(child)
         else
-            show(IOContext(io, :tagcolor => color + i), MIME("text/html"), child)
+            hasmethod(show, Tuple{IO, MIME"text/html", typeof(child)}) ?
+                show(IOContext(io, :tagcolor => color + i), MIME("text/html"), child) :
+                error("Child element of type `$(typeof(child))` does not have a text/html representation.")
         end
     end
     # closing tag

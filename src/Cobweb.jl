@@ -5,7 +5,7 @@ using Scratch: @get_scratch!
 using StructTypes
 using Random
 
-export Page
+export Page, Tab
 
 #-----------------------------------------------------------------------------# init
 struct CobwebDisplay <: AbstractDisplay end
@@ -235,13 +235,9 @@ Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 
 #-----------------------------------------------------------------------------# Tab
 struct Tab
-    page::Page
-    Tab(content) = new(Page(content))
+    content
 end
-function Base.display(::CobwebDisplay, t::Tab)
-    DefaultApplication.open(save(t.page, tempname() * ".html"))
-end
-
+Base.display(::CobwebDisplay, t::Tab) = display(CobwebDisplay(), Page(t.content))
 
 #-----------------------------------------------------------------------------# StructTypes
 StructTypes.StructType(::Type{Node})        = StructTypes.Struct()
@@ -277,7 +273,5 @@ function iframe(x; height=250, width=750)
         """)
     )
 end
-
-include("parser.jl")
 
 end #module

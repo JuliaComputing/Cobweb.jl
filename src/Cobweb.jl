@@ -233,6 +233,16 @@ end
 
 Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 
+#-----------------------------------------------------------------------------# Tab
+struct Tab
+    page::Page
+    Tab(content) = new(Page(content))
+end
+function Base.display(::CobwebDisplay, t::Tab)
+    DefaultApplication.open(save(t.page, tempname() * ".html"))
+end
+
+
 #-----------------------------------------------------------------------------# StructTypes
 StructTypes.StructType(::Type{Node})        = StructTypes.Struct()
 StructTypes.StructType(::Type{Javascript})  = StructTypes.Struct()

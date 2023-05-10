@@ -274,4 +274,6 @@ function iframe(x; height=250, width=750)
     )
 end
 
+include("parser.jl")
+
 end #module

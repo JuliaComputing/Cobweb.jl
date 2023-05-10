@@ -78,7 +78,7 @@ end
     @testset "roundtrip" begin
         node = h.div("hi"; class="myclass", id="myid")
         file = tempname()
-        Cobweb.save(file, Page(node; use_default_head=false))
+        Cobweb.save(file, Page(node))
         node2 = Cobweb.read(file)[end]
         @test node == node2
     end

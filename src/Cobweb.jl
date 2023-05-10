@@ -218,25 +218,14 @@ show method for `MIME("text/html")`.
 """
 struct Page
     content
-    use_default_head::Bool
 end
-Page(content; use_default_head=true) = Page(content, use_default_head)
-Page(pg::Page; use_default_head = pg.use_default_head) = Page(pg.content, use_default_head)
+Page(pg::Page) = pg
 
 save(file::String, page::Page) = save(page, file)
 
 function save(page::Page, file=joinpath(DIR, "index.html"))
     Base.open(touch(file), "w") do io
         println(io, "<!doctype html>")
-        if page.use_default_head
-            println(io, """
-            <head>
-              <meta charset=\"UTF-8\">
-              <meta name="description" content="Cobweb.jl Page">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            """)
-        end
         show(io, MIME("text/html"), page.content)
     end
     file

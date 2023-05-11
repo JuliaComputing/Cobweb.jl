@@ -246,7 +246,7 @@ StructTypes.StructType(::Type{CSS})         = StructTypes.Struct()
 StructTypes.StructType(::Type{Doctype})     = StructTypes.Struct()
 StructTypes.StructType(::Type{Page})        = StructTypes.Struct()
 
-#-----------------------------------------------------------------------------# iframe
+#-----------------------------------------------------------------------------# IFrame
 """
     iframe(x)
 
@@ -254,24 +254,9 @@ Create an <iframe> (without a `src`) using the text/html representation of `x
 Useful for embedding dynamically-generated content.
 """
 function iframe(x; height=250, width=750)
-    id = randstring(10)
+    Base.depwarn("Cobweb.iframe(x; height, width) is deprecated.  Use Cobweb.h.iframe(; srcdoc=x, height, width) instead.", :iframe; force=true)
     x = x isa Union{AbstractString, Number, Symbol} ? HTML(string(x)) : x
-    h.div(
-        h.div(repr("text/html", x); id="content-for-$id", style="display: none;"),
-        h.iframe(; height, width, src="about:blank", style="border:none;", id),
-        h.script("""
-        var content = document.getElementById("content-for-$id").innerHTML;
-        var iframe = document.getElementById("$id");
-
-        var frameDoc = iframe.document;
-        if (iframe.contentWindow)
-            frameDoc = iframe.contentWindow.document;
-
-        frameDoc.open();
-        frameDoc.writeln(content);
-        frameDoc.close();
-        """)
-    )
+    return h.iframe(; height, width, srcdoc=repr("text/html", x))
 end
 
 include("parser.jl")

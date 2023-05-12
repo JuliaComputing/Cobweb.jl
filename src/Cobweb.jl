@@ -226,7 +226,11 @@ save(file::String, page::Page) = save(page, file)
 function save(page::Page, file=joinpath(DIR, "index.html"))
     Base.open(touch(file), "w") do io
         println(io, "<!doctype html>")
-        show(io, MIME("text/html"), page.content)
+        try
+            show(io, MIME("text/html"), page.content)
+        catch
+            println(io, page.content)
+        end
     end
     file
 end
@@ -237,7 +241,7 @@ Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 struct Tab
     content
 end
-Base.display(::CobwebDisplay, t::Tab) = display(CobwebDisplay(), Page(t.content))
+Base.display(::CobwebDisplay, t::Tab) = DefaultApplication.open(save(Page(t.content), tempname() * ".html"))
 
 #-----------------------------------------------------------------------------# StructTypes
 StructTypes.StructType(::Type{Node})        = StructTypes.Struct()

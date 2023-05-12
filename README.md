@@ -5,10 +5,11 @@
 
 <h4 align="center">A Julia package for <b>cob</b>bling together <b>web</b> pages.</h4>
 
-# 🆒 Features
+# Features
 
-- Open any `"text/html"`-representable object in your browser with `Cobweb.Page(x)`.
-- Easily create web content in Julia.
+- Open any `"text/html"`-representable object in your browser with `Page(x)` or `Tab(x)`.
+- Nice syntax for writing HTML: `Cobweb.h.<tag>(children...; attributes...)`.
+    - `Cobweb.h.<TAB>` also autocompletes HTML5 tags.
 - Lightweight, simple, and hackable.
 
 <br><br>

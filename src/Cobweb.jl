@@ -138,8 +138,6 @@ Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"application/xml", node::Node) = show(io, node)
 
-pretty(args...) = error("The `pretty` function has been removed from Cobweb.")
-
 #-----------------------------------------------------------------------------# show (javascript)
 struct Javascript
     x::String
@@ -249,18 +247,18 @@ StructTypes.StructType(::Type{Javascript})  = StructTypes.Struct()
 StructTypes.StructType(::Type{CSS})         = StructTypes.Struct()
 StructTypes.StructType(::Type{Doctype})     = StructTypes.Struct()
 StructTypes.StructType(::Type{Page})        = StructTypes.Struct()
+StructTypes.StructType(::Type{Tab})         = StructTypes.Struct()
 
 #-----------------------------------------------------------------------------# IFrame
 """
     iframe(x)
 
-Create an <iframe> (without a `src`) using the text/html representation of `x
+Create an <iframe> (without a `src`) using the text/html representation of `x`.
 Useful for embedding dynamically-generated content.
 """
-function iframe(x; height=250, width=750)
-    Base.depwarn("Cobweb.iframe(x; height, width) is deprecated.  Use Cobweb.h.iframe(; srcdoc=x, height, width) instead.", :iframe; force=true)
+function iframe(x; height=250, width=750, kw...)
     x = x isa Union{AbstractString, Number, Symbol} ? HTML(string(x)) : x
-    return h.iframe(; height, width, srcdoc=repr("text/html", x))
+    return h.iframe(; height, width, srcdoc=repr("text/html", x), kw...)
 end
 
 include("parser.jl")

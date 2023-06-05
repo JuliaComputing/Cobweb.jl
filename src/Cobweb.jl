@@ -122,12 +122,10 @@ function Base.show(io::IO, node::Node)
     p('>')
     # children
     for (i, child) in enumerate(children(node))
-        if child isa Union{AbstractString, Number, Symbol}
-            p(child)
+        if hasmethod(show, Tuple{IO, MIME"text/html", typeof(child)})
+            show(IOContext(io, :tagcolor => color + i), MIME("text/html"), child)
         else
-            hasmethod(show, Tuple{IO, MIME"text/html", typeof(child)}) ?
-                show(IOContext(io, :tagcolor => color + i), MIME("text/html"), child) :
-                error("Child element of type `$(typeof(child))` does not have a text/html representation.")
+            p(child)
         end
     end
     # closing tag
@@ -216,22 +214,28 @@ show method for `MIME("text/html")`.
 """
 struct Page
     content
+    function Page(content)
+        is_html = hasmethod(show, Tuple{IO, MIME"text/html", typeof(content)})
+        !is_html && @warn "Content ($(typeof(content))) does not have an HTML representation.  Returning `Page(HTML(content))`."
+        new(is_html ? content : HTML(content))
+    end
 end
 Page(pg::Page) = pg
 
 save(file::String, page::Page) = save(page, file)
 
 function save(page::Page, file=joinpath(DIR, "index.html"))
-    Base.open(touch(file), "w") do io
-        println(io, "<!doctype html>")
-        try
-            show(io, MIME("text/html"), page.content)
-        catch
-            println(io, page.content)
-        end
-    end
+    Base.open(io -> show(io, page), touch(file), "w")
     file
 end
+
+function Base.show(io::IO, o::Page)
+    show(io, Doctype())
+    show(io, MIME("text/html"), o.content)
+end
+
+Base.show(io::IO, ::MIME"text/html", page::Page) = show(io, page)
+
 
 Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 

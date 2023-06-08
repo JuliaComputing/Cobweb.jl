@@ -38,13 +38,10 @@ function Base.:(==)(a::Node, b::Node)
         all(ac == bc for (ac,bc) in zip(children(a), children(b)))
 end
 
+# append classes
 function Base.getproperty(node::Node, class::String)
     d = attrs(node)
-    if haskey(d, "class")
-        d["class"] = d["class"] * " $class"
-    else
-        d["class"] = class
-    end
+    d["class"] = haskey(d, "class") ? (d["class"] * ' ' * class) : class
     node
 end
 
@@ -108,27 +105,15 @@ unescape(x::AbstractString) = replace(x, reverse.(escape_chars)...)
 
 #-----------------------------------------------------------------------------# show (html)
 function Base.show(io::IO, node::Node)
-    color = get(io, :tagcolor, 1)
-    p(args...) = printstyled(io, args...; color)
-    # opening tag
+    p(args...) = print(io, args...)
     p('<', tag(node))
     for (k,v) in attrs(node)
-        if v == "true"
-            p(' ', k)
-        elseif v != "false"
-            p(' ', k, '=', '"', v, '"')
-        end
+        v == "true" ? p(' ', k) : v != "false" && p(' ', k, '=', '"', v, '"')
     end
     p('>')
-    # children
-    for (i, child) in enumerate(children(node))
-        if hasmethod(show, Tuple{IO, MIME"text/html", typeof(child)})
-            show(IOContext(io, :tagcolor => color + i), MIME("text/html"), child)
-        else
-            p(child)
-        end
+    for child in children(node)
+        showable("text/html", child) ? show(io, MIME("text/html"), child) : p(child)
     end
-    # closing tag
     p("</", tag(node), '>')
 end
 
@@ -215,7 +200,7 @@ show method for `MIME("text/html")`.
 struct Page
     content
     function Page(content)
-        is_html = hasmethod(show, Tuple{IO, MIME"text/html", typeof(content)})
+        is_html = showable("text/html", content)
         !is_html && @warn "Content ($(typeof(content))) does not have an HTML representation.  Returning `Page(HTML(content))`."
         new(is_html ? content : HTML(content))
     end
@@ -236,7 +221,6 @@ end
 
 Base.show(io::IO, ::MIME"text/html", page::Page) = show(io, page)
 
-
 Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 
 #-----------------------------------------------------------------------------# Tab
@@ -255,14 +239,22 @@ StructTypes.StructType(::Type{Tab})         = StructTypes.Struct()
 
 #-----------------------------------------------------------------------------# IFrame
 """
-    iframe(x)
+    IFrame(content; kw...)
 
-Create an <iframe> (without a `src`) using the text/html representation of `x`.
-Useful for embedding dynamically-generated content.
+Create an `<iframe srcdoc = [content] kw...>`.
 """
+struct IFrame
+    page::Page
+    kw
+end
+IFrame(content; kw...) = IFrame(content isa Page ? content : Page(content), kw)
+
+Base.show(io::IO, o::IFrame) = show(io, h.iframe(; srcdoc=escape(string(o.page)), o.kw...))
+Base.show(io::IO, ::MIME"text/html", o::IFrame) = show(io, o)
+
 function iframe(x; height=250, width=750, kw...)
-    x = x isa Union{AbstractString, Number, Symbol} ? HTML(string(x)) : x
-    return h.iframe(; height, width, srcdoc=repr("text/html", x), kw...)
+    Base.depwarn("Cobweb.iframe(x) is deprecated.  Use `Cobweb.IFrame(x)` instead.", :iframe; force=true)
+    IFrame(x; height=height, width=width, kw...)
 end
 
 include("parser.jl")

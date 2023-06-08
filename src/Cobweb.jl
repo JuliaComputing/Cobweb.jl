@@ -2,7 +2,6 @@ module Cobweb
 
 using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
-using StructTypes
 using Random
 
 export Page, Tab
@@ -228,14 +227,6 @@ struct Tab
     content
 end
 Base.display(::CobwebDisplay, t::Tab) = DefaultApplication.open(save(Page(t.content), tempname() * ".html"))
-
-#-----------------------------------------------------------------------------# StructTypes
-StructTypes.StructType(::Type{Node})        = StructTypes.Struct()
-StructTypes.StructType(::Type{Javascript})  = StructTypes.Struct()
-StructTypes.StructType(::Type{CSS})         = StructTypes.Struct()
-StructTypes.StructType(::Type{Doctype})     = StructTypes.Struct()
-StructTypes.StructType(::Type{Page})        = StructTypes.Struct()
-StructTypes.StructType(::Type{Tab})         = StructTypes.Struct()
 
 #-----------------------------------------------------------------------------# IFrame
 """

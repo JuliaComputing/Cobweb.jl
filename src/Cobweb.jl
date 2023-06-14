@@ -2,7 +2,7 @@ module Cobweb
 
 using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
-using Random
+using OrderedCollections: OrderedDict
 
 export Page, Tab
 
@@ -22,37 +22,43 @@ Should not often be used directly.  See `?Cobweb.h`.
 """
 struct Node
     tag::String
-    attrs::Dict{String,String}
+    attrs::OrderedDict{String,String}
     children::Vector
+    function Node(tag::AbstractString, attrs::AbstractDict, children::AbstractVector)
+        new(string(tag), OrderedDict(string(k) => string(v) for (k,v) in pairs(attrs)), collect(children))
+    end
 end
 tag(o::Node) = getfield(o, :tag)
 attrs(o::Node) = getfield(o, :attrs)
 children(o::Node) = getfield(o, :children)
 
+attrs(kw::Base.Pairs) = OrderedDict(string(k) => string(v) for (k,v) in kw)
 
-function Base.:(==)(a::Node, b::Node)
-    tag(a) == tag(b) &&
-        attrs(a) == attrs(b) &&
-        length(children(a)) == length(children(b)) &&
-        all(ac == bc for (ac,bc) in zip(children(a), children(b)))
-end
+(o::Node)(x...; kw...) = Node(tag(o), merge(attrs(o), attrs(kw)), vcat(children(o), x...))
+
+Base.:(==)(a::Node, b::Node) = all(f(a) == f(b) for f in (tag, attrs, children))
 
 # append classes
-function Base.getproperty(node::Node, class::String)
-    d = attrs(node)
-    d["class"] = haskey(d, "class") ? (d["class"] * ' ' * class) : class
-    node
-end
+Base.getproperty(o::Node, class::String) = o(class = lstrip(get(o, :class, "") * " " * class))
 
-Base.getproperty(node::Node, name::Symbol) = getfield(node, :attrs)[string(name)]
-Base.setproperty!(node::Node, name::Symbol, x) = getfield(node, :attrs)[string(name)] = string(x)
+# methods that pass through to attrs(o)
+Base.propertynames(o::Node) = Symbol.(keys(o))
+Base.getproperty(o::Node, name::Symbol) = attrs(o)[string(name)]
+Base.setproperty!(o::Node, name::Symbol, x) = attrs(o)[string(name)] = string(x)
+Base.get(o::Node, name, val) = get(attrs(o), string(name), string(val))
+Base.get!(o::Node, name, val) = get!(attrs(o), string(name), string(val))
+Base.haskey(o::Node, name) = haskey(attrs(o), string(name))
+Base.keys(o::Node) = keys(attrs(o))
 
-Base.getindex(node::Node, i::Integer) = children(node)[i]
-Base.setindex!(node::Node, x, i::Integer) = setindex!(children(node), x, i)
-
-get_attrs(kw) = Dict(string(k) => string(v) for (k,v) in kw)
-
-(node::Node)(x...; kw...) = Node(tag(node), merge(attrs(node), get_attrs(kw)), vcat(children(node), x...))
+# methods that pass through to children(o)
+Base.lastindex(o::Node) = lastindex(children(o))
+Base.getindex(o::Node, i::Union{Integer, AbstractVector{<:Integer}, Colon}) = children(o)[i]
+Base.setindex!(o::Node, x, i::Union{Integer, AbstractVector{<:Integer}, Colon}) = setindex!(children(o), x, i)
+Base.length(o::Node) = length(children(o))
+Base.iterate(o::Node) = iterate(children(o))
+Base.iterate(o::Node, state) = iterate(children(o), state)
+Base.push!(o::Node, x) = push!(children(o), x)
+Base.append!(o::Node, x) = append!(children(o), x)
 
 #-----------------------------------------------------------------------------# h
 """
@@ -70,9 +76,9 @@ Create an html node with the given `tag`, `children`, and `kw` attributes.
     h.div."myclass"("content")
     # <div class="myclass">content</div>
 """
-h(tag, children...; kw...) = Node(tag, get_attrs(kw), collect(children))
+h(tag, children...; kw...) = Node(tag, attrs(kw), collect(children))
 
-h(tag, attrs::Dict, children...) = Node(tag, attrs, collect(children))
+h(tag, attrs::AbstractDict, children...) = Node(tag, attrs, collect(children))
 
 Base.getproperty(::typeof(h), tag::Symbol) = h(string(tag))
 Base.propertynames(::typeof(h)) = HTML5_TAGS
@@ -129,7 +135,7 @@ Base.show(io::IO, ::MIME"text/html", j::Javascript) = print(io, "<script>", j.x,
 
 #-----------------------------------------------------------------------------# CSS
 """
-    CSS(dictionary)
+    CSS(::AbstractDict)
 
 Write CSS with a nested dictionary with keys (`selector => (property => value)`).
 
@@ -143,9 +149,9 @@ Write CSS with a nested dictionary with keys (`selector => (property => value)`)
     ))
 """
 struct CSS
-    content::Dict{String, Dict{String,String}}
+    content::OrderedDict{String, OrderedDict{String,String}}
     function CSS(o::AbstractDict)
-        new(Dict(string(k) => Dict(string(k2) => string(v2) for (k2,v2) in pairs(v)) for (k,v) in pairs(o)))
+        new(OrderedDict(string(k) => OrderedDict(string(k2) => string(v2) for (k2,v2) in pairs(v)) for (k,v) in pairs(o)))
     end
 end
 function Base.show(io::IO, o::CSS)
@@ -158,11 +164,7 @@ function Base.show(io::IO, o::CSS)
     end
 end
 Base.show(io::IO, ::MIME"text/css", o::CSS) = print(io, o)
-function Base.show(io::IO, ::MIME"text/html", o::CSS)
-    println(io, "<style>")
-    print(io, o)
-    println(io, "</style>")
-end
+Base.show(io::IO, ::MIME"text/html", o::CSS) = show(io, h.style(repr("text/css", o)))
 save(file::String, o::CSS) = save(o, file)
 save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
 

@@ -160,33 +160,31 @@ end
 
 ## 📄 Writing CSS with `Cobweb.CSS`
 
-You can create `Cobweb.CSS` from any `AbstractDict`:
-- `selector => AbstractDict (property => value)`.
-- We like using [`EasyConfig.Config`](https://github.com/joshday/EasyConfig.jl) for this.
+You can create `Cobweb.CSS` from any nested `AbstractDict`, e.g. `selector => (property => value)`.
+- We like using [`EasyConfig.Config`](https://github.com/joshday/EasyConfig.jl) to simplify the syntax.
 
 ```julia
 using EasyConfig
 using Cobweb: h
 
-css = Config()
+style = Config()
+style.p."font-family" = "Arial"
+style."p.upper"."text-transform" = "uppercase"
+style."p.blue".color = "blue"
 
-css."p"."font-family" = "Arial"
-css."p.upper"."text-transform"= "uppercase"
-css."p.blue".color = "blue"
-
-
+css = Cobweb.CSS(style)
 # p {
-#     font-family: Arial;
+#   font-family: Arial;
 # }
 # p.upper {
-#     text-transform: uppercase;
+#   text-transform: uppercase;
 # }
 # p.blue {
-#     color: blue;
+#   color: blue;
 # }
 
 page = h.html(
-    h.head(Cobweb.CSS(css)),
+    h.head(css),
     h.body(
         h.p("this is uppercased and blue in an Arial font.", class="upper blue")
     )

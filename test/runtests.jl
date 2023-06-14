@@ -35,6 +35,14 @@ n2 = h("div", "hi")
     n[1] = "new"
     @test n[1] == "new"
 end
+#-----------------------------------------------------------------------------# indexing
+@testset "get/setindex" begin
+    o = h.div("hi")
+    @test o[1] == "hi"
+    @test only(o) == "hi"
+    @test o[:] == ["hi"]
+    @test collect(o) == ["hi"]
+end
 #-----------------------------------------------------------------------------# HTML
 @testset "HTML" begin
     @test repr(n1) == "<div>hi</div>"

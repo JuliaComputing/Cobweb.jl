@@ -12,6 +12,7 @@ Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 
 [compat]
 DefaultApplication = "1"
+OrderedCollections = "1.5"
 Scratch = "1.1"
 julia = "1"
 

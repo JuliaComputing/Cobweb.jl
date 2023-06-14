@@ -9,8 +9,8 @@
 
 - Open any `"text/html"`-representable object in your browser with `Page(x)` or `Tab(x)`.
 - Nice syntax for writing HTML: `Cobweb.h.<tag>(children...; attributes...)`.
-    - `Cobweb.h.<TAB>` also autocompletes HTML5 tags.
-- Lightweight, simple, and hackable.
+    - `Cobweb.h.<TAB>` autocompletes HTML5 tags for you.
+- Great for templating/building your own `text/html` representations of Julia objects.
 
 <br><br>
 
@@ -86,40 +86,58 @@ h.div(
 
 ## `Cobweb.h` Syntax Summary:
 
-- `h.<tag>` creates a `Cobweb.Node`:
+- `h(tag::String)` creates a `Cobweb.Node`
+- `h.<tag>` is simplified syntax for `h(tag)` and you can tab-autocomplete HTML5 tags.
 
 ```julia
-julia> h.div
+julia> node = Cobweb.h.div
 # <div></div>
 ```
 
-- `Node`s are callable!
-    - Positional arguments add children:
+- Calling a `Node` creates a copy with the specified changes.
+    - Positional arguments add *children*:
     ```julia
-    julia> h.div("child")
+    julia> node = node("child")
     # <div>child</div>
     ```
-    - Keyword arguments add attributes:
+    - Keyword arguments add *attributes*:
     ```julia
-    julia> node = h.div(; id = "myid", class="myclass")
+    julia> node = node(; id = "myid", class="myclass")
     # <div id="myid"></div>
     ```
 
 - There's convenient syntax for appending classes as well:
 ```julia
-julia> node."append classes"
-# <div class="myclass append classes" id="myid"></div>
+julia> node = node."append classes"
+# <div id="myid" class="myclass append classes">child</div>
 ```
 
 
-- `Bool`s are special-cased:
+### Attributes
+
+- `Node`s act like a mutable NamedTuple when it comes to attributes:
+```julia
+node = Cobweb.h.div
+
+node.id = "my_id"
+
+node
+# <div id="my_id"></div>
+```
+
+
+### Children
+
+- `Node`s act like a `Vector` when it comes to children:
 
 ```julia
-julia> h.div(hidden=true)
-# <div hidden></div>
+node = Cobweb.h.div
 
-julia> h.div(hidden=false)
-# <div></div>
+push!(node, Cobweb.h.h1("Hello!"))
+
+node[:]
+# 1-element Vector{Any}:
+#  <h1>Hello!</h1>
 ```
 
 <br>

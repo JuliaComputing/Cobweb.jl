@@ -23,7 +23,7 @@ Should not often be used directly.  See `?Cobweb.h`.
 struct Node
     tag::String
     attrs::OrderedDict{String,String}
-    children::Vector
+    children::Vector{Any}
     function Node(tag::AbstractString, attrs::AbstractDict, children::AbstractVector)
         new(string(tag), OrderedDict(string(k) => string(v) for (k,v) in pairs(attrs)), collect(children))
     end
@@ -84,7 +84,9 @@ Base.getproperty(::typeof(h), tag::Symbol) = h(string(tag))
 Base.propertynames(::typeof(h)) = HTML5_TAGS
 
 #-----------------------------------------------------------------------------# @h
-HTML5_TAGS = [:a,:abbr,:address,:area,:article,:aside,:audio,:b,:base,:bdi,:bdo,:blockquote,:body,:br,:button,:canvas,:caption,:cite,:code,:col,:colgroup,:data,:datalist,:dd,:del,:details,:dfn,:dialog,:div,:dl,:dt,:em,:embed,:fieldset,:figcaption,:figure,:footer,:form,:h1,:h2,:h3,:h4,:h5,:h6,:head,:header,:hgroup,:hr,:html,:i,:iframe,:img,:input,:ins,:kbd,:label,:legend,:li,:link,:main,:map,:mark,:math,:menu,:menuitem,:meta,:meter,:nav,:noscript,:object,:ol,:optgroup,:option,:output,:p,:param,:picture,:pre,:progress,:q,:rb,:rp,:rt,:rtc,:ruby,:s,:samp,:script,:section,:select,:slot,:small,:source,:span,:strong,:style,:sub,:summary,:sup,:svg,:table,:tbody,:td,:template,:textarea,:tfoot,:th,:thead,:time,:title,:tr,:track,:u,:ul,:var,:video,:wbr]
+const HTML5_TAGS = [:a,:abbr,:address,:area,:article,:aside,:audio,:b,:base,:bdi,:bdo,:blockquote,:body,:br,:button,:canvas,:caption,:cite,:code,:col,:colgroup,:data,:datalist,:dd,:del,:details,:dfn,:dialog,:div,:dl,:dt,:em,:embed,:fieldset,:figcaption,:figure,:footer,:form,:h1,:h2,:h3,:h4,:h5,:h6,:head,:header,:hgroup,:hr,:html,:i,:iframe,:img,:input,:ins,:kbd,:label,:legend,:li,:link,:main,:map,:mark,:math,:menu,:menuitem,:meta,:meter,:nav,:noscript,:object,:ol,:optgroup,:option,:output,:p,:param,:picture,:pre,:progress,:q,:rb,:rp,:rt,:rtc,:ruby,:s,:samp,:script,:section,:select,:slot,:small,:source,:span,:strong,:style,:sub,:summary,:sup,:svg,:table,:tbody,:td,:template,:textarea,:tfoot,:th,:thead,:time,:title,:tr,:track,:u,:ul,:var,:video,:wbr]
+
+const VOID_ELEMENTS = [:area,:base,:br,:col,:command,:embed,:hr,:img,:input,:keygen,:link,:meta,:param,:source,:track,:wbr]
 
 macro h(ex)
     esc(_h(ex))
@@ -109,22 +111,56 @@ escape(x) = replace(string(x), escape_chars...)
 unescape(x::AbstractString) = replace(x, reverse.(escape_chars)...)
 
 #-----------------------------------------------------------------------------# show (html)
-function Base.show(io::IO, node::Node)
+function print_opening_tag(io::IO, o::Node; self_close::Bool = false)
+    print(io, '<', tag(o))
+    for (k,v) in attrs(o)
+        v == "true" ? print(io, ' ', k) : v != "false" && print(io, ' ', k, '=', '"', v, '"')
+    end
+    self_close && Symbol(tag(o)) ∉ VOID_ELEMENTS &&  length(children(o)) == 0 ?
+        print(io, " />") :
+        print(io, '>')
+end
+
+function Base.show(io::IO, o::Node)
     p(args...) = print(io, args...)
-    p('<', tag(node))
-    for (k,v) in attrs(node)
-        v == "true" ? p(' ', k) : v != "false" && p(' ', k, '=', '"', v, '"')
-    end
-    p('>')
-    for child in children(node)
-        showable("text/html", child) ? show(io, MIME("text/html"), child) : p(child)
-    end
-    p("</", tag(node), '>')
+    print_opening_tag(io, o)
+    foreach(x -> showable("text/html", x) ? show(io, MIME("text/html"), x) : p(x), children(o))
+    p("</", tag(o), '>')
 end
 
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"application/xml", node::Node) = show(io, node)
+
+function pretty(io::IO, o::Node; depth=get(io, :depth, 0), indent=get(io, :indent, "    "), self_close = get(io, :self_close, true))
+    p(args...) = print(io, args...)
+    p(indent ^ depth)
+    print_opening_tag(io, o; self_close)
+    if length(children(o)) == 1 && !(only(o) isa Node)
+        x = only(o)
+        txt = showable("text/html", x) ? repr("text/html", x) : string(x)
+        if occursin('\n', txt)
+            println(io)
+            foreach(line -> p(indent ^ (depth+1), line, '\n'), lstrip.(split(txt, '\n')))
+            p(indent ^ depth, "</", tag(o), '>')
+        else
+            p(txt)
+            p("</", tag(o), '>')
+        end
+    elseif length(children(o)) > 1
+        child_io = IOContext(io, :depth => depth + 1, :indent => indent)
+        for child in children(o)
+            println(io)
+            pretty(child_io, child)
+        end
+        p('\n', indent ^ depth, "</", tag(o), '>')
+    end
+end
+function pretty(io::IO, x; depth=get(io, :depth, 0), indent=get(io, :indent, "  "))
+    print(io, indent ^ depth)
+    showable("text/html", x) ? show(io, MIME("text/html"), x) : print(io, x)
+end
+pretty(x; kw...) = (io = IOBuffer(); pretty(io, x; kw...); String(take!(io)))
 
 #-----------------------------------------------------------------------------# show (javascript)
 struct Javascript

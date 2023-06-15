@@ -274,10 +274,11 @@ Base.display(::CobwebDisplay, t::Tab) = DefaultApplication.open(save(Page(t.cont
 
 Create an `<iframe srcdoc = [content] kw...>`.
 """
-struct IFrame
+mutable struct IFrame
     page::Page
     kw
 end
+IFrame(; kw...) = IFrame(html""; kw...)
 IFrame(content; kw...) = IFrame(content isa Page ? content : Page(content), kw)
 
 Base.show(io::IO, o::IFrame) = show(io, h.iframe(; srcdoc=escape(string(o.page)), o.kw...))

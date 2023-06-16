@@ -3,7 +3,7 @@
 
 <h1 align="center">🕸️ Cobweb</h1>
 
-<h4 align="center">A Julia package for <b>cob</b>bling together <b>web</b> pages.</h4>
+<p align="center">A Julia package for <b>cob</b>bling together <b>web</b> pages.</p>
 
 # Features
 

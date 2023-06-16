@@ -4,7 +4,7 @@ using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 using OrderedCollections: OrderedDict
 
-export Page, Tab
+export Page, Tab, IFrame
 
 #-----------------------------------------------------------------------------# init
 struct CobwebDisplay <: AbstractDisplay end
@@ -13,6 +13,18 @@ function __init__()
     global DIR = @get_scratch!("CobWeb")
     pushdisplay(CobwebDisplay())
 end
+
+#-----------------------------------------------------------------------------# Units
+# module Units
+#     for u in [:ch,:cm,:em,:ex,:fr,:in,:mm,:pc,:percent,:pt,:px,:rem,:vh,:vmax,:vmin,:vw]
+#         @eval begin
+#             export $u
+#             struct $u end
+#             Base.:*(x::Number, ::Type{$u}) = string(x, $(QuoteNode(u)))
+#         end
+#         @eval $u(x::Number) = $u(x)
+#     end
+# end
 
 #-----------------------------------------------------------------------------# Node
 """
@@ -107,7 +119,7 @@ function _h(ex::Expr)
 end
 _h(x::Symbol) = x in HTML5_TAGS ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
 
-#-----------------------------------------------------------------------------# escapeHTML
+#-----------------------------------------------------------------------------# escape
 escape_chars = ['&' => "&amp;", '"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;"]
 escape(x) = replace(string(x), escape_chars...)
 unescape(x::AbstractString) = replace(x, reverse.(escape_chars)...)
@@ -207,13 +219,11 @@ save(file::String, o::CSS) = save(o, file)
 save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
 
 #-----------------------------------------------------------------------------# Doctype
-"""
-    Cobweb.Doctype()
-
-Inserts into HTML as `<!doctype html>`.
-"""
-struct Doctype end
-Base.show(io::IO, o::Doctype) = print(io, "<!doctype html>")
+struct Doctype
+    content::String
+end
+Doctype() = Doctype("")
+Base.show(io::IO, o::Doctype) = print(io, "<!doctype html ", o.content, ">")
 Base.show(io::IO, ::MIME"text/html", o::Doctype) = show(io, o)
 
 #-----------------------------------------------------------------------------# Comment
@@ -254,7 +264,7 @@ function save(page::Page, file=joinpath(DIR, "index.html"))
 end
 
 function Base.show(io::IO, o::Page)
-    show(io, Doctype())
+    print(io, "<!doctype html>")
     show(io, MIME("text/html"), o.content)
 end
 
@@ -266,7 +276,9 @@ Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
 struct Tab
     content
 end
-Base.display(::CobwebDisplay, t::Tab) = DefaultApplication.open(save(Page(t.content), tempname() * ".html"))
+save(file::String, tab::Tab) = save(tab, file)
+save(tab::Tab, file=string(tempname(), ".html")) = save(Page(tab.content), file)
+Base.display(::CobwebDisplay, t::Tab) = DefaultApplication.open(save(t))
 
 #-----------------------------------------------------------------------------# IFrame
 """

@@ -89,3 +89,8 @@ end
         @test node == node2
     end
 end
+#-----------------------------------------------------------------------------# IFrame
+@testset "IFrame" begin
+    o = IFrame(height="100px")
+    @test occursin("100px", repr("text/html", o))
+end

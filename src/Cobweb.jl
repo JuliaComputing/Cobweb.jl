@@ -55,7 +55,13 @@ Base.getproperty(o::Node, class::String) = o(class = lstrip(get(o, :class, "") *
 
 # methods that pass through to attrs(o)
 Base.propertynames(o::Node) = Symbol.(keys(o))
-Base.getproperty(o::Node, name::Symbol) = attrs(o)[string(name)]
+function Base.getproperty(o::Node, name::Symbol)
+    if name == :hx
+        hx(o)
+    else
+        attrs(o)[string(name)]
+    end
+end
 Base.setproperty!(o::Node, name::Symbol, x) = attrs(o)[string(name)] = string(x)
 Base.get(o::Node, name, val) = get(attrs(o), string(name), string(val))
 Base.get!(o::Node, name, val) = get!(attrs(o), string(name), string(val))
@@ -100,7 +106,7 @@ const HTML5_TAGS = [:a,:abbr,:address,:area,:article,:aside,:audio,:b,:base,:bdi
 
 const VOID_ELEMENTS = [:area,:base,:br,:col,:command,:embed,:hr,:img,:input,:keygen,:link,:meta,:param,:source,:track,:wbr]
 
-SVG2_TAGS = [:a,:animate,:animateMotion,:animateTransform,:audio,:canvas,:circle,:clipPath,:defs,:desc,:discard,:ellipse,:feBlend,:feColorMatrix,:feComponentTransfer,:feComposite,:feConvolveMatrix,:feDiffuseLighting,:feDisplacementMap,:feDistantLight,:feDropShadow,:feFlood,:feFuncA,:feFuncB,:feFuncG,:feFuncR,:feGaussianBlur,:feImage,:feMerge,:feMergeNode,:feMorphology,:feOffset,:fePointLight,:feSpecularLighting,:feSpotLight,:feTile,:feTurbulence,:filter,:foreignObject,:g,:iframe,:image,:line,:linearGradient,:marker,:mask,:metadata,:mpath,:path,:pattern,:polygon,:polyline,:radialGradient,:rect,:script,:set,:stop,:style,:svg,:switch,:symbol,:text,:textPath,:title,:tspan,:unknown,:use,:video,:view]
+const SVG2_TAGS = [:a,:animate,:animateMotion,:animateTransform,:audio,:canvas,:circle,:clipPath,:defs,:desc,:discard,:ellipse,:feBlend,:feColorMatrix,:feComponentTransfer,:feComposite,:feConvolveMatrix,:feDiffuseLighting,:feDisplacementMap,:feDistantLight,:feDropShadow,:feFlood,:feFuncA,:feFuncB,:feFuncG,:feFuncR,:feGaussianBlur,:feImage,:feMerge,:feMergeNode,:feMorphology,:feOffset,:fePointLight,:feSpecularLighting,:feSpotLight,:feTile,:feTurbulence,:filter,:foreignObject,:g,:iframe,:image,:line,:linearGradient,:marker,:mask,:metadata,:mpath,:path,:pattern,:polygon,:polyline,:radialGradient,:rect,:script,:set,:stop,:style,:svg,:switch,:symbol,:text,:textPath,:title,:tspan,:unknown,:use,:video,:view]
 
 macro h(ex)
     esc(_h(ex))
@@ -301,6 +307,9 @@ function iframe(x; height=250, width=750, kw...)
     IFrame(x; height=height, width=width, kw...)
 end
 
+include("htmx.jl")
 include("parser.jl")
+
+
 
 end #module

@@ -43,6 +43,19 @@ end
     @test o[:] == ["hi"]
     @test collect(o) == ["hi"]
 end
+#-----------------------------------------------------------------------------# HTMX
+@testset "HTMX" begin
+    n = h.div
+    nhx = n.hx
+    nhx.swap = "innerHTML"
+    n.swap = "something else"
+    @test nhx.swap == "innerHTML"
+    @test n.swap == "something else"
+    @test n.hx.swap == "innerHTML"
+    @test n.hx.swap == attrs(n)["hx-swap"]
+    @test n.swap == attrs(n)["swap"]  
+
+end
 #-----------------------------------------------------------------------------# HTML
 @testset "HTML" begin
     @test repr(n1) == "<div>hi</div>"

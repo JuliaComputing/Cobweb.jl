@@ -55,6 +55,8 @@ Base.getproperty(o::Node, class::String) = o(class = lstrip(get(o, :class, "") *
 
 # methods that pass through to attrs(o)
 Base.propertynames(o::Node) = Symbol.(keys(o))
+
+# updated to accomodate .hx syntactic sugar
 function Base.getproperty(o::Node, name::Symbol)
     if name == :hx
         hx(o)

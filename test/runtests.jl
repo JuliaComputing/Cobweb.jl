@@ -1,5 +1,5 @@
 using Cobweb
-using Cobweb: h, hx, Page, Node, attrs, tag, children
+using Cobweb: h, hx, Page, Node, attrs, tag, children, swap
 using Test
 
 n1 = h.div("hi")
@@ -61,6 +61,12 @@ end
     @test nhx.target == "/mytarget"
     @test n.hx.target == "/mytarget"
     @test n.hx.target == attrs(n)["hx-target"]
+
+    @testset "swap" begin
+        @test hx.swap == :swap #swap(:innerHTML) == hx.swap => :innerHTML
+        @test swap() == (:swap => :innerHTML)
+        @test swap(:innerHTML) == (hx.swap => :innerHTML)        
+    end
 
 
 end

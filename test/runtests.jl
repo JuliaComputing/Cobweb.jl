@@ -63,11 +63,25 @@ end
     @test n.hx.target == attrs(n)["hx-target"]
 
     @testset "swap" begin
-        @test hx.swap == :swap #swap(:innerHTML) == hx.swap => :innerHTML
-        @test swap() == (:swap => :innerHTML)
-        @test swap(:innerHTML) == (hx.swap => :innerHTML)        
-    end
+        @test hx.swap == :swap
+        @test swap() == (hx.swap => :innerHTML)
+        @test swap(:innerHTML) == (hx.swap => :innerHTML)
+        @test swap.innerHTML == :innerHTML  
+        
+        nhx(:swap, swap.outerHTML)
+        @test n.hx.swap == "outerHTML"
+        nhx.swap = swap.innerHTML
+        @test n.hx.swap == "innerHTML"
+        nhx(:swap => :outerHTML)
+        @test n.hx.swap == "outerHTML"
 
+        nhx("select-oob", "true")
+        @test attrs(n)["hx-select-oob"] == "true"
+
+        nhx.selectoob = "false"
+        @test attrs(n)["hx-select-oob"] == "false"       
+        
+    end
 
 end
 #-----------------------------------------------------------------------------# HTML

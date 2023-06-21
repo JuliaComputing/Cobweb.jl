@@ -103,7 +103,7 @@ julia> node = Cobweb.h.div
     - Keyword arguments add *attributes*:
     ```julia
     julia> node = node(; id = "myid", class="myclass")
-    # <div id="myid"></div>
+    # <div id="myid" class="myclass"></div>
     ```
 
 - There's convenient syntax for appending classes as well:
@@ -125,6 +125,45 @@ node
 # <div id="my_id"></div>
 ```
 
+There are scenarios where you might need to use hypenated attributes. In such cases, you can add the attributes using `Pair{Symbol,String}` as keyword arguments:
+
+```julia
+node = Cobweb.h.div
+
+node(; Symbol("data-toggle") => "modal")
+# <div data-toggle="modal"></div>
+```
+
+#### HTMX integration
+
+- The HTMX specific attributes can be added similar to the HTML attributes using the following syntax:
+
+```julia
+node = Cobweb.h.div
+
+node.hx.target = "#my_target"
+# <div hx-target="#my_target"></div>
+```
+
+There are a few HTMX-specific attributes that are hypenated. To ensure a homogeneous syntax, these attributes can still be added using the normal syntax (e.g. `pushurl` will be mapped to `hx-push-url`):
+
+```julia
+node = Cobweb.h.div
+
+node.hx.pushurl = "true"
+# <div hx-push-url="true"></div>
+```
+
+Alternatively, the following syntax can be used:
+
+```julia
+node = Cobweb.h.div
+
+node.hx("push-url" => "true")
+# <div hx-push-url="true"></div>
+```
+
+The take-away is that the `hx` prefix doesn't need to be explicitly added to the attribute name when using the `hx` syntax.
 
 ### Children
 

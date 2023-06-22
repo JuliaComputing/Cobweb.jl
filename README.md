@@ -136,7 +136,7 @@ node(; Symbol("data-toggle") => "modal")
 
 #### HTMX integration
 
-- The HTMX specific attributes can be added similar to the HTML attributes using the following syntax:
+- The [HTMX](https://htmx.org/docs/) specific attributes can be added similar to the HTML attributes using the following syntax:
 
 ```julia
 node = Cobweb.h.div

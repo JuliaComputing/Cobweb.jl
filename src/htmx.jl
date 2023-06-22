@@ -1,3 +1,5 @@
+_htmxcdn = h.script(; src="https://unpkg.com/htmx.org@1.9.2", integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h", crossorigin="anonymous")
+
 struct hx
     node::Node    
 end
@@ -14,8 +16,16 @@ getattr(x::Symbol) = haskey(HIPHENATED, x) ? HIPHENATED[x] : x
 
 Base.propertynames(::hx) = HTMX_ATTRS
 Base.propertynames(::Type{hx}) = HTMX_ATTRS
-Base.getproperty(x::hx, name::Symbol) = name == :node ? getfield(x, :node) : attrs(x.node)["hx-$(getattr(name))"]
-Base.getproperty(::Type{hx}, name::Symbol) = name in HTMX_ATTRS ? getattr(name) : error("hx does not have property $name")
+Base.getproperty(x::hx, name::Symbol) = name == :node ? _node(x) : attrs(x)["hx-$(getattr(name))"]
+function Base.getproperty(::Type{hx}, name::Symbol) 
+    if name == :cdn
+        _htmxcdn
+    elseif name in HTMX_ATTRS
+        getattr(name)
+    else 
+        error("hx does not have property $name")
+    end
+end
 Base.setproperty!(x::hx, name::Symbol, v) = attrs(x.node)["hx-$(getattr(name))"] = string(v)
 
 Base.get(x::hx, name, val) = get(attrs(x.node), string(getattr(name)), string(val))
@@ -28,13 +38,14 @@ function (x::hx)(; kw...)
     Node(tag(x), merge(attrs(x), hxattrs), children(x))
 end
 
-
 # swap related stuff
 const SWAP_ATTRS = [:innerHTML, :outerHTML, :afterbegin, :afterend, :beforebegin, :beforeend]
 swap() = (:swap => :innerHTML) # the default - don't expect this to be used
 swap(name::Symbol) = name in SWAP_ATTRS ? (:swap => name) : error("swap does not have property $name")
 Base.propertynames(::typeof(swap)) = SWAP_ATTRS
 Base.getproperty(::typeof(swap), name::Symbol) = name in SWAP_ATTRS ? name : error("swap does not have property $name")
+
+
 
 
 

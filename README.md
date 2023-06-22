@@ -171,8 +171,15 @@ node = Cobweb.h.div
 node(; id="my_id", class="wide").hx(; target="#my_target")
 # <div id="my_id" class="wide" hx-target="#my_target"></div>
 ```
-
 The take-away is that the `hx` prefix doesn't need to be explicitly added to the attribute name when using the `hx` syntax.
+
+**Important**: HTMX requires loading the HTMX library. Altough the CDN is not reccomended for production, it is the easiest way to get started:
+
+```julia
+Cobweb.hx.cdn
+# <script src="https://unpkg.com/htmx.org@1.9.2" integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h" crossorigin="anonymous"></script>
+```
+
 
 ### Children
 

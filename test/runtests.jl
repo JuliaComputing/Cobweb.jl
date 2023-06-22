@@ -82,6 +82,8 @@ end
         
     end
 
+    #@test string(hx.cdn) == """<script src="https://unpkg.com/htmx.org@1.9.2" integrity="sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h" crossorigin="anonymous"></script>"""
+
 end
 #-----------------------------------------------------------------------------# HTML
 @testset "HTML" begin

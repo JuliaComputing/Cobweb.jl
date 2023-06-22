@@ -2,6 +2,11 @@ struct hx
     node::Node    
 end
 
+_node(o::hx) = getfield(o, :node)
+tag(o::hx) = getfield(o |> _node, :tag)
+attrs(o::hx) = getfield(o |> _node, :attrs)
+children(o::hx) = getfield(o |> _node, :children)
+
 const HTMX_ATTRS = [:trigger, :target, :post, :get, :put, :patch, :delete, :swap, :indicator, :sync, :preserve, :include, :params, :encoding, :confirm, :disinherit, :boost, :select, :pushurl, :selectoob, :swapoob, :historyelt]
 const HIPHENATED = Dict(:pushurl => Symbol("push-url"), :selectoob => Symbol("select-oob"), :swapoob => Symbol("swap-oob"), :historyelt => Symbol("history-elt"))
 
@@ -18,10 +23,11 @@ Base.get!(x::hx, name, val) = get!(attrs(x.node), string(getattr(name)), string(
 Base.haskey(x::hx, name) = haskey(attrs(x.node), string(getattr(name)))
 Base.keys(x::hx) = keys(attrs(x.node))
 
-(x::hx)(name::Symbol, value::Union{String,Symbol}) = attrs(x.node)["hx-$(getattr(name))"] = "$value"
-(x::hx)(name::String, value::Union{String,Symbol}) = x(Symbol(name), value)
-(x::hx)(p::Pair{Symbol,<:Union{String,Symbol}}) = attrs(x.node)["hx-$(getattr(p[1]))"] = "$(p[2])"
-(x::hx)(p::Pair{String,<:Union{String,Symbol}}) = x(Symbol(p[1]), p[2])
+function (x::hx)(; kw...)
+    hxattrs = OrderedDict("hx-$(getattr(Symbol(k)))" => string(v) for (k,v) in kw) 
+    Node(tag(x), merge(attrs(x), hxattrs), children(x))
+end
+
 
 # swap related stuff
 const SWAP_ATTRS = [:innerHTML, :outerHTML, :afterbegin, :afterend, :beforebegin, :beforeend]

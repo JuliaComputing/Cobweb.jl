@@ -125,7 +125,7 @@ node
 # <div id="my_id"></div>
 ```
 
-There are scenarios where you might need to use hypenated attributes. In such cases, you can add the attributes using `Pair{Symbol,String}` as keyword arguments:
+There are scenarios where you might need to use hyphenated attributes. In such cases, you can add the attributes using `Pair{Symbol,String}` as keyword arguments:
 
 ```julia
 node = Cobweb.h.div
@@ -145,7 +145,7 @@ node.hx.target = "#my_target"
 # <div hx-target="#my_target"></div>
 ```
 
-There are a few HTMX-specific attributes that are hypenated. To ensure a homogeneous syntax, these attributes can still be added using the normal syntax (e.g. `pushurl` will be mapped to `hx-push-url`):
+There are a few HTMX-specific attributes that are hyphenated. To ensure a homogeneous syntax, these attributes can still be added using the normal syntax (e.g. `pushurl` will be mapped to `hx-push-url`):
 
 ```julia
 node = Cobweb.h.div
@@ -159,8 +159,17 @@ Alternatively, the following syntax can be used:
 ```julia
 node = Cobweb.h.div
 
-node.hx("push-url" => "true")
+node.hx(; Symbol("push-url")=>"true")
 # <div hx-push-url="true"></div>
+```
+
+If you want to add both regular attributes and HTMX-specific attributes, you can mix the two approaches above:
+
+```julia
+node = Cobweb.h.div
+
+node(; id="my_id", class="wide").hx(; target="#my_target")
+# <div id="my_id" class="wide" hx-target="#my_target"></div>
 ```
 
 The take-away is that the `hx` prefix doesn't need to be explicitly added to the attribute name when using the `hx` syntax.

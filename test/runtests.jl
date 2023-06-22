@@ -46,7 +46,7 @@ end
 #-----------------------------------------------------------------------------# HTMX
 @testset "HTMX" begin
     n = h.div
-    nhx = n.hx
+    nhx = n.hx    
     nhx.swap = "innerHTML"
     n.swap = "something else"
     @test nhx.swap == "innerHTML"
@@ -57,8 +57,7 @@ end
     
     @test hx.target == :target
 
-    nhx(hx.target, "/mytarget")
-    @test nhx.target == "/mytarget"
+    n = nhx(; hx.target => "/mytarget")
     @test n.hx.target == "/mytarget"
     @test n.hx.target == attrs(n)["hx-target"]
 
@@ -68,18 +67,18 @@ end
         @test swap(:innerHTML) == (hx.swap => :innerHTML)
         @test swap.innerHTML == :innerHTML  
         
-        nhx(:swap, swap.outerHTML)
-        @test n.hx.swap == "outerHTML"
-        nhx.swap = swap.innerHTML
-        @test n.hx.swap == "innerHTML"
-        nhx(:swap => :outerHTML)
-        @test n.hx.swap == "outerHTML"
+        up = nhx(; swap = swap.outerHTML)
+        @test up.hx.swap == "outerHTML"
+        up.hx.swap = swap.innerHTML
+        @test up.hx.swap == "innerHTML"
+        up2 = up.hx(; :swap => :outerHTML)
+        @test up2.hx.swap == "outerHTML"
 
-        nhx("select-oob", "true")
-        @test attrs(n)["hx-select-oob"] == "true"
+        up3 = up2.hx(; Symbol("select-oob") => "true")
+        @test attrs(up3)["hx-select-oob"] == "true"
 
-        nhx.selectoob = "false"
-        @test attrs(n)["hx-select-oob"] == "false"       
+        up3.hx.selectoob = "false"
+        @test attrs(up3)["hx-select-oob"] == "false"       
         
     end
 

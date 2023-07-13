@@ -44,7 +44,7 @@ tag(o::Node) = getfield(o, :tag)
 attrs(o::Node) = getfield(o, :attrs)
 children(o::Node) = getfield(o, :children)
 
-attrs(kw::Base.Pairs) = OrderedDict(string(k) => string(v) for (k,v) in kw)
+attrs(kw::Base.Iterators.Pairs) = OrderedDict(string(k) => string(v) for (k,v) in kw)
 
 (o::Node)(x...; kw...) = Node(tag(o), merge(attrs(o), attrs(kw)), vcat(children(o), x...))
 

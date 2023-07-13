@@ -110,8 +110,15 @@ _h(x::Symbol) = x in HTML5_TAGS ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
 
 #-----------------------------------------------------------------------------# escape
 escape_chars = ['&' => "&amp;", '"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;"]
-escape(x) = replace(string(x), escape_chars...)
-unescape(x::AbstractString) = replace(x, reverse.(escape_chars)...)
+
+function escape(x; patterns = escape_chars)
+    for pat in patterns
+        x = replace(x, pat)
+    end
+    return x
+end
+
+unescape(x::AbstractString) = escape(x; patterns = reverse.(escape_chars))
 
 #-----------------------------------------------------------------------------# show (html)
 function print_opening_tag(io::IO, o::Node; self_close::Bool = false)

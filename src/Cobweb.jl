@@ -14,17 +14,6 @@ function __init__()
     pushdisplay(CobwebDisplay())
 end
 
-#-----------------------------------------------------------------------------# Units
-# module Units
-#     for u in [:ch,:cm,:em,:ex,:fr,:in,:mm,:pc,:percent,:pt,:px,:rem,:vh,:vmax,:vmin,:vw]
-#         @eval begin
-#             export $u
-#             struct $u end
-#             Base.:*(x::Number, ::Type{$u}) = string(x, $(QuoteNode(u)))
-#         end
-#         @eval $u(x::Number) = $u(x)
-#     end
-# end
 
 #-----------------------------------------------------------------------------# Node
 """
@@ -217,6 +206,14 @@ Base.show(io::IO, ::MIME"text/css", o::CSS) = print(io, o)
 Base.show(io::IO, ::MIME"text/html", o::CSS) = show(io, h.style(repr("text/css", o)))
 save(file::String, o::CSS) = save(o, file)
 save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
+
+#-----------------------------------------------------------------------------# CSSUnits
+baremodule CSSUnits
+    using Base: @eval, string
+    for k in [:ch,:cm,:em,:ex,:fr,:in,:mm,:pc,:percent,:pt,:px,:rem,:vh,:vmax,:vmin,:vw]
+        @eval ($k = string($(QuoteNode(k))); export $k)
+    end
+end
 
 #-----------------------------------------------------------------------------# Doctype
 struct Doctype

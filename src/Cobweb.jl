@@ -11,7 +11,7 @@ struct CobwebDisplay <: AbstractDisplay end
 
 function __init__()
     global DIR = @get_scratch!("CobWeb")
-    pushdisplay(CobwebDisplay())
+    isdefined(Main, :VSCodeServer) || pushdisplay(CobwebDisplay())
 end
 
 

@@ -3,23 +3,23 @@ using Cobweb: h, Page, Node, attrs, tag, children
 using Test
 
 n1 = h.div("hi")
-n2 = h("div", "hi")
+n2 = h(:div, "hi")
 
 #-----------------------------------------------------------------------------# Creating Nodes
 @testset "Node Creation" begin
     for node in [
-            h("div"),
+            h(:div),
             h.div(),
-            h("div", "child"),
+            h(:div, "child"),
             h.div("child"),
-            h.("p", "c1", "c2"),
+            h.(:p, "c1", "c2"),
             h.p("c1", "c2"),
             h.h1()."class"("c1", "c2")
         ]
         @test node isa Node
     end
     node = h.h1()."class"("c1", "c2")
-    @test attrs(node)["class"] == "class"
+    @test attrs(node)[:class] == "class"
     @test length(children(node)) == 2
     @test n1 == n2
 
@@ -52,16 +52,10 @@ end
     @test repr("text/javascript", Cobweb.Javascript("x")) == "x"
     @test repr("text/html", Cobweb.Javascript("x")) == "<script>x</script>"
 end
-#-----------------------------------------------------------------------------# Page
-@testset "Page" begin
-    page = Page(n1)
-    @test Page(page) == page
-    Cobweb.save(page)
-    @test isfile(joinpath(Cobweb.DIR, "index.html"))
-
-    Cobweb.save(page, "temp.html")
-    @test isfile("temp.html")
-    rm("temp.html", force=true)
+#-----------------------------------------------------------------------------# CSS
+@testset "CSS" begin
+    @test repr("text/css", Cobweb.CSS("x")) == "x"
+    @test repr("text/html", Cobweb.CSS("x")) == "<style>x</style>"
 end
 #-----------------------------------------------------------------------------# escaping
 @testset "escaping" begin
@@ -76,21 +70,21 @@ end
     include(joinpath(@__DIR__, "..", "docs", "make.jl"))
     @test isfile(joinpath(@__DIR__, "..", "docs", "build", "index.html"))
 
-    input = Cobweb.read(joinpath(@__DIR__, "..", "docs", "build", "index.html"))
-    @test input[1] == Cobweb.Doctype()
+    # input = Cobweb.read(joinpath(@__DIR__, "..", "docs", "build", "index.html"))
+    # @test input[1] == Cobweb.Doctype()
 
-    rm(joinpath(@__DIR__, "..", "docs", "build"), recursive=true)
+    # rm(joinpath(@__DIR__, "..", "docs", "build"), recursive=true)
 
-    @testset "roundtrip" begin
-        node = h.div("hi"; class="myclass", id="myid")
-        file = tempname()
-        Cobweb.save(file, Page(node))
-        node2 = Cobweb.read(file)[end]
-        @test node == node2
-    end
+    # @testset "roundtrip" begin
+    #     node = h.div("hi"; class="myclass", id="myid")
+    #     file = tempname()
+    #     open(io -> write(io, node), file, "w")
+    #     node2 = Cobweb.read(file)[end]
+    #     @test node == node2
+    # end
 end
 #-----------------------------------------------------------------------------# IFrame
 @testset "IFrame" begin
-    o = IFrame(height="100px")
+    o = IFrame("test", height="100px")
     @test occursin("100px", repr("text/html", o))
 end

@@ -3,37 +3,62 @@ module Cobweb
 using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 using OrderedCollections: OrderedDict
+using EnumX
 
-export Page, Tab, IFrame
+export Page, Tab, h, preview, @js_str, @css_str, IFrame
 
 #-----------------------------------------------------------------------------# init
-struct CobwebDisplay <: AbstractDisplay end
-
 function __init__()
     global DIR = @get_scratch!("CobWeb")
-    isdefined(Main, :VSCodeServer) || pushdisplay(CobwebDisplay())
 end
 
+#-----------------------------------------------------------------------------# preview
+function preview(content; reuse=true)
+    file = reuse ? joinpath(DIR, "index.html") : string(tempname(), ".html")
+    content2 = showable("text/html", content) ? content : HTML(content)
+    Base.open(io -> show(io, MIME("text/html"), content2), touch(file), "w")
+    DefaultApplication.open(file)
+end
+
+function Page(x)
+    Base.depwarn("Page(x) is deprecated.  Use preview(x) instead.", :Page; force=true)
+    preview(x)
+end
+function Tab(x)
+    Base.depwarn("Tab(x) is deprecated.  Use preview(x; reuse=false) instead.", :Tab; force=true)
+    preview(x; reuse=false)
+end
+
+#-----------------------------------------------------------------------------# consts & "enums"
+const HTML5_TAGS = [:a,:abbr,:address,:area,:article,:aside,:audio,:b,:base,:bdi,:bdo,:blockquote,:body,:br,:button,:canvas,:caption,:cite,:code,:col,:colgroup,:command,:datalist,:dd,:del,:details,:dfn,:dialog,:div,:dl,:dt,:em,:embed,:fieldset,:figcaption,:figure,:footer,:form,:h1,:h2,:h3,:h4,:h5,:h6,:head,:header,:hgroup,:hr,:html,:i,:iframe,:img,:input,:ins,:kbd,:label,:legend,:li,:link,:main,:map,:mark,:math,:menu,:menuitem,:meta,:meter,:nav,:noscript,:object,:ol,:optgroup,:option,:output,:p,:param,:picture,:pre,:progress,:q,:rb,:rp,:rt,:rtc,:ruby,:s,:samp,:script,:section,:select,:slot,:small,:source,:span,:strong,:style,:sub,:summary,:sup,:svg,:table,:tbody,:td,:template,:textarea,:tfoot,:th,:thead,:time,:title,:tr,:track,:u,:ul,:var,:video,:wbr]
+
+const VOID_ELEMENTS = [:area,:base,:br,:col,:command,:embed,:hr,:img,:input,:keygen,:link,:meta,:param,:source,:track,:wbr]
+
+const SVG2_TAGS = [:a,:animate,:animateMotion,:animateTransform,:audio,:canvas,:circle,:clipPath,:defs,:desc,:discard,:ellipse,:feBlend,:feColorMatrix,:feComponentTransfer,:feComposite,:feConvolveMatrix,:feDiffuseLighting,:feDisplacementMap,:feDistantLight,:feDropShadow,:feFlood,:feFuncA,:feFuncB,:feFuncG,:feFuncR,:feGaussianBlur,:feImage,:feMerge,:feMergeNode,:feMorphology,:feOffset,:fePointLight,:feSpecularLighting,:feSpotLight,:feTile,:feTurbulence,:filter,:foreignObject,:g,:iframe,:image,:line,:linearGradient,:marker,:mask,:metadata,:mpath,:path,:pattern,:polygon,:polyline,:radialGradient,:rect,:script,:set,:stop,:style,:svg,:switch,:symbol,:text,:textPath,:title,:tspan,:unknown,:use,:video,:view]
+
+const css_units = (ch="ch", cm="cm", em="em", ex="ex", fr="fr", in="in", mm="mm", pc="pc", percent="%",
+    pt="pt", px="px", rem="rem", vh="vh", vmax="vmax", vmin="vmin", vw="vw")
 
 #-----------------------------------------------------------------------------# Node
 """
-    Node(tag::String, attrs::Dict{String,String}, children::Vector)
+    Node(tag::Symbol, attrs::OrderedDict{Symbol,String}, children::Vector)
 
 Should not often be used directly.  See `?Cobweb.h`.
 """
 struct Node
-    tag::String
-    attrs::OrderedDict{String,String}
+    tag::Symbol
+    attrs::OrderedDict{Symbol, String}
     children::Vector{Any}
-    function Node(tag::AbstractString, attrs::AbstractDict, children::AbstractVector)
-        new(string(tag), OrderedDict(string(k) => string(v) for (k,v) in pairs(attrs)), collect(children))
-    end
+end
+function Node(tag::Symbol, attrs::OrderedDict{Symbol, String}, children::AbstractVector)
+    tag in HTML5_TAGS || @warn "<$tag> is not a valid HTML5 tag."
+    Node(tag, attrs, collect(children))
 end
 tag(o::Node) = getfield(o, :tag)
 attrs(o::Node) = getfield(o, :attrs)
 children(o::Node) = getfield(o, :children)
 
-attrs(kw::AbstractDict) = OrderedDict(string(k) => string(v) for (k,v) in kw)
+attrs(kw::AbstractDict) = OrderedDict(Symbol(k) => string(v) for (k,v) in pairs(kw))
 
 (o::Node)(x...; kw...) = Node(tag(o), merge(attrs(o), attrs(kw)), vcat(children(o), x...))
 
@@ -44,8 +69,8 @@ Base.getproperty(o::Node, class::String) = o(class = lstrip(get(o, :class, "") *
 
 # methods that pass through to attrs(o)
 Base.propertynames(o::Node) = Symbol.(keys(o))
-Base.getproperty(o::Node, name::Symbol) = attrs(o)[string(name)]
-Base.setproperty!(o::Node, name::Symbol, x) = attrs(o)[string(name)] = string(x)
+Base.getproperty(o::Node, name::Symbol) = attrs(o)[name]
+Base.setproperty!(o::Node, name::Symbol, x) = attrs(o)[name] = string(x)
 Base.get(o::Node, name, val) = get(attrs(o), string(name), string(val))
 Base.get!(o::Node, name, val) = get!(attrs(o), string(name), string(val))
 Base.haskey(o::Node, name) = haskey(attrs(o), string(name))
@@ -61,72 +86,13 @@ Base.iterate(o::Node, state) = iterate(children(o), state)
 Base.push!(o::Node, x) = push!(children(o), x)
 Base.append!(o::Node, x) = append!(children(o), x)
 
-#-----------------------------------------------------------------------------# h
-"""
-    h(tag, children...; kw...)
-    h.tag(children...; kw...)
-    h.tag."classes"(children...; kw...)
-
-Create an html node with the given `tag`, `children`, and `kw` attributes.
-
-### Examples
-
-    h.div("child", class="myclass", id="myid")
-    # <div class="myclass" id="myid">child</div>
-
-    h.div."myclass"("content")
-    # <div class="myclass">content</div>
-"""
-h(tag, children...; kw...) = Node(tag, attrs(kw), collect(children))
-
-h(tag, attrs::AbstractDict, children...) = Node(tag, attrs, collect(children))
-
-Base.getproperty(::typeof(h), tag::Symbol) = h(string(tag))
-Base.propertynames(::typeof(h)) = HTML5_TAGS
-
-#-----------------------------------------------------------------------------# @h
-const HTML5_TAGS = [:a,:abbr,:address,:area,:article,:aside,:audio,:b,:base,:bdi,:bdo,:blockquote,:body,:br,:button,:canvas,:caption,:cite,:code,:col,:colgroup,:data,:datalist,:dd,:del,:details,:dfn,:dialog,:div,:dl,:dt,:em,:embed,:fieldset,:figcaption,:figure,:footer,:form,:h1,:h2,:h3,:h4,:h5,:h6,:head,:header,:hgroup,:hr,:html,:i,:iframe,:img,:input,:ins,:kbd,:label,:legend,:li,:link,:main,:map,:mark,:math,:menu,:menuitem,:meta,:meter,:nav,:noscript,:object,:ol,:optgroup,:option,:output,:p,:param,:picture,:pre,:progress,:q,:rb,:rp,:rt,:rtc,:ruby,:s,:samp,:script,:section,:select,:slot,:small,:source,:span,:strong,:style,:sub,:summary,:sup,:svg,:table,:tbody,:td,:template,:textarea,:tfoot,:th,:thead,:time,:title,:tr,:track,:u,:ul,:var,:video,:wbr]
-
-const VOID_ELEMENTS = [:area,:base,:br,:col,:command,:embed,:hr,:img,:input,:keygen,:link,:meta,:param,:source,:track,:wbr]
-
-SVG2_TAGS = [:a,:animate,:animateMotion,:animateTransform,:audio,:canvas,:circle,:clipPath,:defs,:desc,:discard,:ellipse,:feBlend,:feColorMatrix,:feComponentTransfer,:feComposite,:feConvolveMatrix,:feDiffuseLighting,:feDisplacementMap,:feDistantLight,:feDropShadow,:feFlood,:feFuncA,:feFuncB,:feFuncG,:feFuncR,:feGaussianBlur,:feImage,:feMerge,:feMergeNode,:feMorphology,:feOffset,:fePointLight,:feSpecularLighting,:feSpotLight,:feTile,:feTurbulence,:filter,:foreignObject,:g,:iframe,:image,:line,:linearGradient,:marker,:mask,:metadata,:mpath,:path,:pattern,:polygon,:polyline,:radialGradient,:rect,:script,:set,:stop,:style,:svg,:switch,:symbol,:text,:textPath,:title,:tspan,:unknown,:use,:video,:view]
-
-macro h(ex)
-    esc(_h(ex))
-end
-
-function _h(ex::Expr)
-    for i in 1:length(ex.args)
-        x = ex.args[i]
-        if x isa Expr
-            ex.args[i] = _h(x)
-        elseif x isa Symbol && x in HTML5_TAGS
-            ex.args[i] = Expr(:., :(Cobweb.h), QuoteNode(ex.args[1]))
-        end
-    end
-    ex
-end
-_h(x::Symbol) = x in HTML5_TAGS ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
-
-#-----------------------------------------------------------------------------# escape
-escape_chars = ['&' => "&amp;", '"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;"]
-
-function escape(x; patterns = escape_chars)
-    for pat in patterns
-        x = replace(x, pat)
-    end
-    return x
-end
-
-unescape(x::AbstractString) = escape(x; patterns = reverse.(escape_chars))
-
-#-----------------------------------------------------------------------------# show (html)
+#-----------------------------------------------------------------------------# show Node
 function print_opening_tag(io::IO, o::Node; self_close::Bool = false)
     print(io, '<', tag(o))
     for (k,v) in attrs(o)
         v == "true" ? print(io, ' ', k) : v != "false" && print(io, ' ', k, '=', '"', v, '"')
     end
-    self_close && Symbol(tag(o)) ∉ VOID_ELEMENTS &&  length(children(o)) == 0 ?
+    self_close && Symbol(tag(o)) ∉ VOID_ELEMENTS && length(children(o)) == 0 ?
         print(io, " />") :
         print(io, '>')
 end
@@ -141,6 +107,8 @@ end
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, node)
 Base.show(io::IO, ::MIME"application/xml", node::Node) = show(io, node)
+
+Base.write(io::IO, node::Node) = show(io, MIME"text/html"(), node)
 
 function pretty(io::IO, o::Node; depth=get(io, :depth, 0), indent=get(io, :indent, "    "), self_close = get(io, :self_close, true))
     p(args...) = print(io, args...)
@@ -172,54 +140,118 @@ function pretty(io::IO, x; depth=get(io, :depth, 0), indent=get(io, :indent, "  
 end
 pretty(x; kw...) = (io = IOBuffer(); pretty(io, x; kw...); String(take!(io)))
 
-#-----------------------------------------------------------------------------# show (javascript)
+#-----------------------------------------------------------------------------# h
+"""
+    h(tag, children...; kw...)
+    h.tag(children...; kw...)
+    h.tag."classes"(children...; kw...)
+
+Create an html node with the given `tag`, `children`, and `kw` attributes.
+
+### Examples
+
+    h.div("child", class="myclass", id="myid")
+    # <div class="myclass" id="myid">child</div>
+
+    h.div."myclass"("content")
+    # <div class="myclass">content</div>
+"""
+h(tag, children...; kw...) = Node(tag, attrs(kw), collect(children))
+
+h(tag, attrs::AbstractDict, children...) = Node(tag, attrs, collect(children))
+
+Base.getproperty(::typeof(h), tag::Symbol) = h(tag)
+
+Base.propertynames(::typeof(h)) = HTML5_TAGS
+
+#-----------------------------------------------------------------------------# @h
+macro h(ex)
+    esc(_h(ex))
+end
+
+function _h(ex::Expr)
+    for i in 1:length(ex.args)
+        x = ex.args[i]
+        if x isa Expr
+            ex.args[i] = _h(x)
+        elseif x isa Symbol && x in HTML5_TAGS
+            ex.args[i] = Expr(:., :(Cobweb.h), QuoteNode(ex.args[1]))
+        end
+    end
+    ex
+end
+_h(x::Symbol) = x in propertynames(typeof(h)) ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
+
+#-----------------------------------------------------------------------------# escape
+escape_chars = ['&' => "&amp;", '"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;"]
+
+function escape(x::AbstractString; patterns = escape_chars)
+    for pat in patterns
+        x = replace(x, pat)
+    end
+    return x
+end
+
+unescape(x::AbstractString) = escape(x; patterns = reverse.(escape_chars))
+
+
+#-----------------------------------------------------------------------------# Javascript
+"""
+    Javascript(content::String)
+
+String wrapper to identify content as Javascript.  Will be displayed appropriately in text/javascript and text/html mime types.
+"""
 struct Javascript
     x::String
 end
 Base.show(io::IO, ::MIME"text/javascript", j::Javascript) = print(io, j.x)
 Base.show(io::IO, ::MIME"text/html", j::Javascript) = print(io, "<script>", j.x, "</script>")
 
+
+# TODO: validate Javascript content
+"""
+    js"content"
+
+Same as `Javascript("content")`.
+"""
+macro js_str(x)
+    esc(Javascript(string(x)))
+end
+
 #-----------------------------------------------------------------------------# CSS
 """
-    CSS(::AbstractDict)
+    CSS(content::String)
 
-Write CSS with a nested dictionary with keys (`selector => (property => value)`).
-
-### Example
-
-    CSS(Dict(
-        "p" => Dict(
-            "font-family" => "Arial",
-            "text-transform" => "uppercase"
-        )
-    ))
+Wrapper to identify content as CSS.  Will be displayed appropriately in text/css and text/html mime types.
 """
 struct CSS
-    content::OrderedDict{String, OrderedDict{String,String}}
-    function CSS(o::AbstractDict)
-        new(OrderedDict(string(k) => OrderedDict(string(k2) => string(v2) for (k2,v2) in pairs(v)) for (k,v) in pairs(o)))
-    end
+    x::String
 end
-function Base.show(io::IO, o::CSS)
-    for (k,v) in o.content
+CSS(x::AbstractDict) = CSS(OrderedDict(string(k) => OrderedDict(string(k2) => string(v2) for (k2,v2) in pairs(v)) for (k,v) in pairs(x)))
+function CSS(x::OrderedDict{String, OrderedDict{String, String}})
+    io = IOBuffer()
+    for (k,v) in pairs(x)
         println(io, k, " {")
         for (k2, v2) in v
             println(io, "  ", k2, ':', ' ', v2, ';')
         end
         println(io, '}')
     end
+    CSS(String(take!(io)))
 end
-Base.show(io::IO, ::MIME"text/css", o::CSS) = print(io, o)
-Base.show(io::IO, ::MIME"text/html", o::CSS) = show(io, h.style(repr("text/css", o)))
-save(file::String, o::CSS) = save(o, file)
-save(o::CSS, file::String) = open(io -> show(io, x), touch(file), "w")
 
-#-----------------------------------------------------------------------------# CSSUnits
-baremodule CSSUnits
-    using Base: @eval, string
-    for k in [:ch,:cm,:em,:ex,:fr,:in,:mm,:pc,:percent,:pt,:px,:rem,:vh,:vmax,:vmin,:vw]
-        @eval ($k = string($(QuoteNode(k))); export $k)
-    end
+Base.show(io::IO, ::MIME"text/css", c::CSS) = print(io, c.x)
+Base.show(io::IO, ::MIME"text/html", c::CSS) = print(io, "<style>", c.x, "</style>")
+
+
+# TODO: validate css content
+"""
+    css"content"
+
+Same as `CSS("content")`.
+"""
+macro css_str(x)
+    esc(CSS(string(x)))
 end
 
 #-----------------------------------------------------------------------------# Doctype
@@ -227,8 +259,7 @@ struct Doctype
     content::String
 end
 Doctype() = Doctype("")
-Base.show(io::IO, o::Doctype) = print(io, "<!doctype html ", o.content, ">")
-Base.show(io::IO, ::MIME"text/html", o::Doctype) = show(io, o)
+Base.show(io::IO, ::MIME"text/html", o::Doctype) = print(io, "<!doctype html ", o.content, ">")
 
 #-----------------------------------------------------------------------------# Comment
 """
@@ -240,71 +271,23 @@ struct Comment
     x::String
     Comment(x) = new(string(x))
 end
-Base.show(io::IO, o::Comment) = print(io, "<!-- ", o.x, " -->")
-Base.show(io::IO, ::MIME"text/html", o::Comment) = show(io, o)
-
-#-----------------------------------------------------------------------------# Page
-"""
-    Page(content)
-
-Wrapper to display `content` in your web browser.  Assumes `content` has an available
-show method for `MIME("text/html")`.
-"""
-struct Page
-    content
-    function Page(content)
-        is_html = showable("text/html", content)
-        !is_html && @warn "Content ($(typeof(content))) does not have an HTML representation.  Returning `Page(HTML(content))`."
-        new(is_html ? content : HTML(content))
-    end
-end
-Page(pg::Page) = pg
-
-save(file::String, page::Page) = save(page, file)
-
-function save(page::Page, file=joinpath(DIR, "index.html"))
-    Base.open(io -> show(io, page), touch(file), "w")
-    file
-end
-
-function Base.show(io::IO, o::Page)
-    print(io, "<!doctype html>")
-    show(io, MIME("text/html"), o.content)
-end
-
-Base.show(io::IO, ::MIME"text/html", page::Page) = show(io, page)
-
-Base.display(::CobwebDisplay, page::Page) = DefaultApplication.open(save(page))
-
-#-----------------------------------------------------------------------------# Tab
-struct Tab
-    content
-end
-save(file::String, tab::Tab) = save(tab, file)
-save(tab::Tab, file=string(tempname(), ".html")) = save(Page(tab.content), file)
-Base.display(::CobwebDisplay, t::Tab) = DefaultApplication.open(save(t))
+Base.show(io::IO, ::MIME"text/html", o::Comment) = print(io, "<!-- ", o.x, " -->")
 
 #-----------------------------------------------------------------------------# IFrame
 """
-    IFrame(content; kw...)
+    IFrame(content; attrs...)
 
-Create an `<iframe srcdoc = [content] kw...>`.
+Create an `<iframe srcdoc=\$content \$(attrs...)>`.
 """
-mutable struct IFrame
-    page::Page
-    kw
+struct IFrame{T, KW}
+    content::T
+    kw::KW
+    IFrame(x::T; kw...) where {T} = new{T, typeof(kw)}(x, kw)
 end
-IFrame(; kw...) = IFrame(html""; kw...)
-IFrame(content; kw...) = IFrame(content isa Page ? content : Page(content), kw)
-
-Base.show(io::IO, o::IFrame) = show(io, h.iframe(; srcdoc=escape(string(o.page)), o.kw...))
-Base.show(io::IO, ::MIME"text/html", o::IFrame) = show(io, o)
-
-function iframe(x; height=250, width=750, kw...)
-    Base.depwarn("Cobweb.iframe(x) is deprecated.  Use `Cobweb.IFrame(x)` instead.", :iframe; force=true)
-    IFrame(x; height=height, width=width, kw...)
+function Base.show(io::IO, ::MIME"text/html", o::IFrame)
+    show(io, h.iframe(; srcdoc=escape(repr("text/html", o.content)), o.kw...))
 end
 
-include("parser.jl")
+# include("parser.jl")
 
 end #module

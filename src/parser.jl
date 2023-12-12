@@ -127,17 +127,17 @@ end
 
 make_node(s) = Node(get_tag(s), get_attributes(s), [])
 
-get_tag(x) = x[findfirst(r"[a-zA-z][^\s>/]*", x)]
+get_tag(x) = Symbol(x[findfirst(r"[a-zA-z][^\s>/]*", x)])
 
 function get_attributes(x)
-    out = Dict{String,String}()
+    out = OrderedDict{Symbol,String}()
     rng = findfirst(r"(?<=\s).*\"", x)
     isnothing(rng) && return out
     s = x[rng]
     kys = (m.match for m in eachmatch(r"[a-zA-Z][a-zA-Z\.-_]*(?=\=)", s))
     vals = (m.match for m in eachmatch(r"(?<=(\=\"))[^\"]*", s))
     foreach(zip(kys,vals)) do (k,v)
-        out[string(k)] = v
+        out[Symbol(k)] = v
     end
     out
 end

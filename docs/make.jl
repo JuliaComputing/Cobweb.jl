@@ -7,11 +7,11 @@ page = h.html(
         h.meta(charset="UTF-8"),
         h.meta(name="viewport", content="width=device-width, initial-scale=1.0"),
         h.title("Cobweb.jl Docs"),
-        css"""
+        CSS("""
         html {
             font-family: Arial;
         }
-        """
+        """)
     ),
     h.body(
         h.h1("This page was built with ", h.code("Cobweb.jl"), "."),
@@ -25,4 +25,7 @@ page = h.html(
 
 index_html = touch(joinpath(mkpath(joinpath(@__DIR__, "build")), "index.html"))
 
-open(io -> write(io, page), index_html, "w")
+open(index_html, "w") do io
+    println(io, Cobweb.Doctype())
+    write(io, page)
+end

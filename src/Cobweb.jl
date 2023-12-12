@@ -3,9 +3,8 @@ module Cobweb
 using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 using OrderedCollections: OrderedDict
-using EnumX
 
-export Page, Tab, h, preview, @js_str, @css_str, IFrame
+export Page, Tab, h, preview, IFrame, @js_str, @css_str
 
 #-----------------------------------------------------------------------------# init
 function __init__()
@@ -20,6 +19,7 @@ function preview(content; reuse=true)
     DefaultApplication.open(file)
 end
 
+#-----------------------------------------------------------------------------# Page
 function Page(x)
     Base.depwarn("Page(x) is deprecated.  Use preview(x) instead.", :Page; force=true)
     preview(x)
@@ -206,16 +206,10 @@ struct Javascript
 end
 Base.show(io::IO, ::MIME"text/javascript", j::Javascript) = print(io, j.x)
 Base.show(io::IO, ::MIME"text/html", j::Javascript) = print(io, "<script>", j.x, "</script>")
+# TODO: validate Javascript content in constructor
 
-
-# TODO: validate Javascript content
-"""
-    js"content"
-
-Same as `Javascript("content")`.
-"""
-macro js_str(x)
-    esc(Javascript(string(x)))
+macro js_str(ex)
+    esc(Cobweb.Javascript(ex))
 end
 
 #-----------------------------------------------------------------------------# CSS
@@ -228,38 +222,29 @@ struct CSS
     x::String
 end
 CSS(x::AbstractDict) = CSS(OrderedDict(string(k) => OrderedDict(string(k2) => string(v2) for (k2,v2) in pairs(v)) for (k,v) in pairs(x)))
-function CSS(x::OrderedDict{String, OrderedDict{String, String}})
-    io = IOBuffer()
-    for (k,v) in pairs(x)
-        println(io, k, " {")
-        for (k2, v2) in v
-            println(io, "  ", k2, ':', ' ', v2, ';')
-        end
-        println(io, '}')
-    end
-    CSS(String(take!(io)))
-end
-
+# function CSS(x::OrderedDict{String, OrderedDict{String, String}})
+#     io = IOBuffer()
+#     for (k,v) in pairs(x)
+#         println(io, k, " {")
+#         for (k2, v2) in v
+#             println(io, "  ", k2, ':', ' ', v2, ';')
+#         end
+#         println(io, '}')
+#     end
+#     CSS(String(take!(io)))
+# end
+# TODO: validate css content in constructor
 Base.show(io::IO, ::MIME"text/css", c::CSS) = print(io, c.x)
 Base.show(io::IO, ::MIME"text/html", c::CSS) = print(io, "<style>", c.x, "</style>")
 
-
-# TODO: validate css content
-"""
-    css"content"
-
-Same as `CSS("content")`.
-"""
-macro css_str(x)
-    esc(CSS(string(x)))
+macro css_str(ex)
+    esc(Cobweb.CSS(ex))
 end
 
 #-----------------------------------------------------------------------------# Doctype
-struct Doctype
-    content::String
-end
-Doctype() = Doctype("")
-Base.show(io::IO, ::MIME"text/html", o::Doctype) = print(io, "<!doctype html ", o.content, ">")
+struct Doctype end
+Base.show(io::IO, o::Doctype) = print(io, "<!DOCTYPE html>")
+Base.show(io::IO, ::MIME"text/html", o::Doctype) = print(io, "<!DOCTYPE html>")
 
 #-----------------------------------------------------------------------------# Comment
 """
@@ -288,6 +273,6 @@ function Base.show(io::IO, ::MIME"text/html", o::IFrame)
     show(io, h.iframe(; srcdoc=escape(repr("text/html", o.content)), o.kw...))
 end
 
-# include("parser.jl")
+include("parser.jl")
 
 end #module

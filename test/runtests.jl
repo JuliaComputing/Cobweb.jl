@@ -70,18 +70,18 @@ end
     include(joinpath(@__DIR__, "..", "docs", "make.jl"))
     @test isfile(joinpath(@__DIR__, "..", "docs", "build", "index.html"))
 
-    # input = Cobweb.read(joinpath(@__DIR__, "..", "docs", "build", "index.html"))
-    # @test input[1] == Cobweb.Doctype()
+    input = Cobweb.read(joinpath(@__DIR__, "..", "docs", "build", "index.html"))
+    @test input[1] == Cobweb.Doctype()
 
-    # rm(joinpath(@__DIR__, "..", "docs", "build"), recursive=true)
+    rm(joinpath(@__DIR__, "..", "docs", "build"), recursive=true)
 
-    # @testset "roundtrip" begin
-    #     node = h.div("hi"; class="myclass", id="myid")
-    #     file = tempname()
-    #     open(io -> write(io, node), file, "w")
-    #     node2 = Cobweb.read(file)[end]
-    #     @test node == node2
-    # end
+    @testset "roundtrip" begin
+        node = h.div("hi"; class="myclass", id="myid")
+        file = tempname()
+        open(io -> write(io, node), file, "w")
+        node2 = Cobweb.read(file)[end]
+        @test node == node2
+    end
 end
 #-----------------------------------------------------------------------------# IFrame
 @testset "IFrame" begin

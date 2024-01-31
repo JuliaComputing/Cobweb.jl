@@ -26,7 +26,7 @@ body = h.body(
     h.h1("Here is a title!"),
     h.p("This is a paragraph."),
     h.button("Click Me for an alert!", onclick="buttonClicked()"),
-    Cobweb.Javascript("const buttonClicked = () => alert('This button was clicked!')"),
+    h.script("const buttonClicked = () => alert('This button was clicked!')"),
 )
 
 

@@ -23,6 +23,10 @@ n2 = h(:div, "hi")
     @test length(children(node)) == 2
     @test n1 == n2
 
+    # _h
+    @test Cobweb._h(:(div("hi"))) == :(Cobweb.h.div("hi"))
+    @test Cobweb.@h div(b(), hr(), p("text")) == h.div(h.b(), h.hr(), h.p("text"))
+
     # edit attributes after creation
     n = h.div("hi")
     n.id = "someid"
@@ -87,4 +91,14 @@ end
 @testset "IFrame" begin
     o = IFrame("test", height="100px")
     @test occursin("100px", repr("text/html", o))
+end
+#-----------------------------------------------------------------------------# pretty
+@testset "pretty" begin
+    @test Cobweb.pretty(h.div(h.p("A"), h.p("B"))) == "<div>\n    <p>A</p>\n    <p>B</p>\n</div>"
+end
+
+#-----------------------------------------------------------------------------# other
+@testset "other" begin
+    @test repr("text/html", Cobweb.Doctype()) == "<!DOCTYPE html>"
+    @test repr("text/html", Cobweb.Comment("text")) == "<!-- text -->"
 end

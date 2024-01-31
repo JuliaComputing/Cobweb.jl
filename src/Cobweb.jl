@@ -144,7 +144,6 @@ pretty(x; kw...) = (io = IOBuffer(); pretty(io, x; kw...); String(take!(io)))
 """
     h(tag, children...; kw...)
     h.tag(children...; kw...)
-    h.tag."classes"(children...; kw...)
 
 Create an html node with the given `tag`, `children`, and `kw` attributes.
 
@@ -170,13 +169,10 @@ macro h(ex)
 end
 
 function _h(ex::Expr)
-    for i in 1:length(ex.args)
-        x = ex.args[i]
-        if x isa Expr
-            ex.args[i] = _h(x)
-        elseif x isa Symbol && x in HTML5_TAGS
-            ex.args[i] = Expr(:., :(Cobweb.h), QuoteNode(ex.args[1]))
-        end
+    for (i, x) in enumerate(ex.args)
+        ex.args[i] = x isa Expr ? _h(x) :
+            x isa Symbol && x in HTML5_TAGS ? Expr(:., :(Cobweb.h), QuoteNode(x)) :
+            x
     end
     ex
 end
@@ -206,7 +202,6 @@ struct Javascript
 end
 Base.show(io::IO, ::MIME"text/javascript", j::Javascript) = print(io, j.x)
 Base.show(io::IO, ::MIME"text/html", j::Javascript) = print(io, "<script>", j.x, "</script>")
-# TODO: validate Javascript content in constructor
 
 macro js_str(ex)
     esc(Cobweb.Javascript(ex))
@@ -221,19 +216,6 @@ Wrapper to identify content as CSS.  Will be displayed appropriately in text/css
 struct CSS
     x::String
 end
-CSS(x::AbstractDict) = CSS(OrderedDict(string(k) => OrderedDict(string(k2) => string(v2) for (k2,v2) in pairs(v)) for (k,v) in pairs(x)))
-# function CSS(x::OrderedDict{String, OrderedDict{String, String}})
-#     io = IOBuffer()
-#     for (k,v) in pairs(x)
-#         println(io, k, " {")
-#         for (k2, v2) in v
-#             println(io, "  ", k2, ':', ' ', v2, ';')
-#         end
-#         println(io, '}')
-#     end
-#     CSS(String(take!(io)))
-# end
-# TODO: validate css content in constructor
 Base.show(io::IO, ::MIME"text/css", c::CSS) = print(io, c.x)
 Base.show(io::IO, ::MIME"text/html", c::CSS) = print(io, "<style>", c.x, "</style>")
 

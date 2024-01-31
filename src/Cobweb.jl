@@ -101,7 +101,7 @@ function Base.show(io::IO, o::Node)
     p(args...) = print(io, args...)
     print_opening_tag(io, o)
     foreach(x -> showable("text/html", x) ? show(io, MIME("text/html"), x) : p(x), children(o))
-    p("</", tag(o), '>')
+    tag(o) in VOID_ELEMENTS || p("</", tag(o), '>')
 end
 
 Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)

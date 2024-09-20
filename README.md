@@ -7,8 +7,9 @@
 
 # ⭐ Features
 
-- Open `"text/html"`-representable objects in your browser with `preview(x)`.
-- Clean syntax for writing HTML: `h.<tag>(children...; attrs...)`
+- **Display HTML**: Open `"text/html"`-representable objects in your browser with `preview(x)`.
+- **Write HTML**: Clean syntax for writing HTML: `h.<tag>(children...; attrs...)`
+- **Read HTML**: `Cobweb.read`.
 
 ```julia
 h.div(class="myclass", style="color:red;")("content!")

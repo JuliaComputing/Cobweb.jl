@@ -77,9 +77,11 @@ Base.push!(o::Node, x) = push!(children(o), x)
 Base.append!(o::Node, x) = append!(children(o), x)
 Base.deleteat!(o::Node, x) = deleteat!(children(o), x)
 Base.pop!(o::Node) = pop!(children(o))
+Base.popat!(o::Node, i) = popat!(children(o), i)
 Base.popfirst!(o::Node) = popfirst!(children(o))
 Base.splice!(o::Node, i::Integer) = splice!(children(o), i)
 Base.splice!(o::Node, i::Integer, x) = splice!(children(o), i, x)
+Base.empty!(o::Node) = empty!(children(o))
 
 
 

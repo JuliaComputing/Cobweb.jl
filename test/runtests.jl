@@ -48,11 +48,32 @@ end
     @test get(node, :id2, 1) == 1
     get!(node, :id2, "myid2")
     @test propertynames(node) == [:id, :class, :id2]
-    @test node[end] == "content"
+    @test node[1] == node[end] == "content"
+    # push!
     push!(node, h.span("child"))
     @test node[end] == h.span("child")
+    # append!
     append!(node, [h.span("child2"), h.span("child3")])
     @test node[end] == h.span("child3")
+    # empty!
+    empty!(node)
+    @test isempty(node)
+    # pop!
+    push!(node, "test")
+    @test pop!(node) == "test"
+    @test isempty(node)
+    push!(node, "test")
+    # popat!
+    push!(node, "test")
+    @test popat!(node, 1) == "test"
+    # deleteat!
+    deleteat!(node, 1)
+    @test isempty(node)
+    # splice!
+    push!(node, "test")
+    @test splice!(node, 1, ["new"]) == "test"
+    @test splice!(node, 1) == "new"
+    @test isempty(node)
 end
 #-----------------------------------------------------------------------------# indexing
 @testset "get/setindex" begin

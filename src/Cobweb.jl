@@ -84,6 +84,13 @@ Base.iterate(o::Node) = iterate(children(o))
 Base.iterate(o::Node, state) = iterate(children(o), state)
 Base.push!(o::Node, x) = push!(children(o), x)
 Base.append!(o::Node, x) = append!(children(o), x)
+Base.deleteat!(o::Node, x) = deleteat!(children(o), x)
+Base.pop!(o::Node) = pop!(children(o))
+Base.popfirst!(o::Node) = popfirst!(children(o))
+Base.splice!(o::Node, i::Integer) = splice!(children(o), i)
+Base.splice!(o::Node, i::Integer, x) = splice!(children(o), i, x)
+
+
 
 #-----------------------------------------------------------------------------# show Node
 function print_opening_tag(io::IO, o::Node; self_close::Bool = false)
@@ -244,13 +251,15 @@ Base.show(io::IO, ::MIME"text/html", o::Comment) = print(io, "<!-- ", o.x, " -->
     IFrame(content; attrs...)
 
 Create an `<iframe srcdoc=\$content \$(attrs...)>`.
+
+This can be helpful to work around environments that block loading scripts, such as Jupyter notebooks.
 """
-struct IFrame{T, KW}
+struct IFrame{T}
     content::T
-    kw::KW
-    IFrame(x::T; kw...) where {T} = new{T, typeof(kw)}(x, kw)
+    kw::OrderedDict{Symbol, Any}
+    IFrame(x::T = ""; kw...) where {T} = new{T}(x, OrderedDict{Symbol,Any}(kw))
 end
-function Base.show(io::IO, ::MIME"text/html", o::IFrame)
+function Base.show(io::IO, ::MIME"text/html", o::IFrame{T}) where {T}
     show(io, h.iframe(; srcdoc=escape(repr("text/html", o.content)), o.kw...))
 end
 

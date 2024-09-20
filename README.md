@@ -7,8 +7,8 @@
 
 # Features
 
-- View any `"text/html"`-representable object in your browser with `preview(x)`.
-- Nice syntax for writing HTML: `h.<tag>(children...; attrs...)`
+- Open `"text/html"`-representable objects in your browser with `preview(x)`.
+- Clean syntax for writing HTML: `h.<tag>(children...; attrs...)`
 
 ```julia
 h.div(class="myclass", style="color:red;")("content!")
@@ -29,14 +29,13 @@ body = h.body(
     h.script("const buttonClicked = () => alert('This button was clicked!')"),
 )
 
-
 preview(body)
 ```
 
 <br>
 <br>
 
-# ✨ Creating Nodes with `Cobweb.h`
+# ✨ Writing HTML with `Cobweb.h`
 
 ### `h` is a pretty special function
 
@@ -49,7 +48,7 @@ h.tag # == h(:tag)
 
 ### `h` Creates a `Cobweb.Node`
 
-- `Cobweb.Node`s are callable:
+- `Cobweb.Node`s are callable (creates a copy with new children/attributes):
 
 ```julia
 h.div("hi")  # positional arguments add *children*
@@ -65,7 +64,8 @@ h.div("hi")(style="border:none;")
 
 ### Child Elements can be Anything
 
-- If `!showable("text/html", child)`, `child` will be added as `HTML(child)`.
+- If a `child` isn't `MIME"text/html"`-representable, it will be added as a `HTML(child)`.
+- Note: `HTML(x)` means "insert this into HTML as `print(x)`".
 
 ```julia
 # e.g. Strings have no text/html representation, so the added child is `HTML("hi")`
@@ -73,6 +73,8 @@ h.div("hi")
 # <div>hi</div>
 
 # You can take advantage of Julia structs that already have text/html representations:
+using Markdown
+
 md_example = h.div(md"""
 # Here is Some Markdown
 
@@ -102,7 +104,7 @@ node
 - `Node`s act like a `Vector` when it comes to children:
 
 ```julia
-node = Cobweb.h.div
+node = Cobweb.h.div  # <div></div>
 
 push!(node, Cobweb.h.h1("Hello!"))
 
@@ -111,6 +113,8 @@ node  # <div><h1>Hello!</h1></div>
 node[1] = "changed"
 
 node  # <div>changed</div>
+
+collect(node)  # ["changed"]
 ```
 
 <br>

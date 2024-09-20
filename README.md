@@ -137,7 +137,7 @@ end
 <br>
 <br>
 
-## 📄 Writing Javascript and CSS
+## 📝 Writing Javascript and CSS
 
 - Cobweb exports `Javascript` and `CSS` string wrappers that `show` appropriately in different mime types:
 - You can also construct these wrappers with `js"..."` and `css"..."`.
@@ -155,7 +155,7 @@ CSS("""html { border: none; }""")
 <br>
 <br>
 
-## Parsing HTML to `Cobweb.Node`
+## 🌐 Parsing HTML to `Cobweb.Node`
 
 ```julia
 using Downloads, Cobweb
@@ -166,6 +166,6 @@ Cobweb.read(Downloads.download("https://juliacomputing.github.io/Cobweb.jl/"))
 <br>
 <br>
 
-## Attribution
+## 🙏 Attribution
 
 - Cobweb.jl is influenced by [Hyperscript.jl](https://github.com/JuliaWeb/Hyperscript.jl)

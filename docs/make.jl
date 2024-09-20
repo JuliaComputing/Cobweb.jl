@@ -1,5 +1,5 @@
 using Cobweb
-using Cobweb: h, Page, CSS
+using Cobweb: h, CSS
 using Markdown
 
 page = h.html(

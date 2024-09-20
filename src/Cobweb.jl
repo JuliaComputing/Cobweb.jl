@@ -19,16 +19,6 @@ function preview(content; reuse=true)
     DefaultApplication.open(file)
 end
 
-#-----------------------------------------------------------------------------# Page
-function Page(x)
-    Base.depwarn("Page(x) is deprecated.  Use preview(x) instead.", :Page; force=true)
-    preview(x)
-end
-function Tab(x)
-    Base.depwarn("Tab(x) is deprecated.  Use preview(x; reuse=false) instead.", :Tab; force=true)
-    preview(x; reuse=false)
-end
-
 #-----------------------------------------------------------------------------# consts
 const HTML5_TAGS = [:a,:abbr,:address,:area,:article,:aside,:audio,:b,:base,:bdi,:bdo,:blockquote,:body,:br,:button,:canvas,:caption,:cite,:code,:col,:colgroup,:command,:datalist,:dd,:del,:details,:dfn,:dialog,:div,:dl,:dt,:em,:embed,:fieldset,:figcaption,:figure,:footer,:form,:h1,:h2,:h3,:h4,:h5,:h6,:head,:header,:hgroup,:hr,:html,:i,:iframe,:img,:input,:ins,:kbd,:label,:legend,:li,:link,:main,:map,:mark,:math,:menu,:menuitem,:meta,:meter,:nav,:noscript,:object,:ol,:optgroup,:option,:output,:p,:param,:picture,:pre,:progress,:q,:rb,:rp,:rt,:rtc,:ruby,:s,:samp,:script,:section,:select,:slot,:small,:source,:span,:strong,:style,:sub,:summary,:sup,:svg,:table,:tbody,:td,:template,:textarea,:tfoot,:th,:thead,:time,:title,:tr,:track,:u,:ul,:var,:video,:wbr]
 
@@ -48,11 +38,14 @@ struct Node
     tag::Symbol
     attrs::OrderedDict{Symbol, String}
     children::Vector{Any}
+    function Node(tag, attributes, children)
+        sym = Symbol(tag)
+        sym in HTML5_TAGS || @warn "<$tag> is not a valid HTML5 tag."
+        new(sym, attrs(attributes), [children...])
+    end
 end
-function Node(tag::Symbol, attrs::OrderedDict{Symbol, String}, children::AbstractVector)
-    tag in HTML5_TAGS || @warn "<$tag> is not a valid HTML5 tag."
-    Node(tag, attrs, collect(children))
-end
+
+
 tag(o::Node) = getfield(o, :tag)
 attrs(o::Node) = getfield(o, :attrs)
 children(o::Node) = getfield(o, :children)
@@ -67,13 +60,11 @@ Base.:(==)(a::Node, b::Node) = all(f(a) == f(b) for f in (tag, attrs, children))
 Base.getproperty(o::Node, class::String) = o(class = lstrip(get(o, :class, "") * " " * class))
 
 # methods that pass through to attrs(o)
-Base.propertynames(o::Node) = Symbol.(keys(o))
+Base.propertynames(o::Node) = Symbol.(keys(attrs(o)))
 Base.getproperty(o::Node, name::Symbol) = attrs(o)[name]
 Base.setproperty!(o::Node, name::Symbol, x) = attrs(o)[name] = string(x)
-Base.get(o::Node, name, val) = get(attrs(o), string(name), string(val))
-Base.get!(o::Node, name, val) = get!(attrs(o), string(name), string(val))
-Base.haskey(o::Node, name) = haskey(attrs(o), string(name))
-Base.keys(o::Node) = keys(attrs(o))
+Base.get(o::Node, name, val) = get(attrs(o), Symbol(name), val)
+Base.get!(o::Node, name, val) = get!(attrs(o), Symbol(name), val)
 
 # methods that pass through to children(o)
 Base.lastindex(o::Node) = lastindex(children(o))
@@ -161,7 +152,7 @@ Create an html node with the given `tag`, `children`, and `kw` attributes.
     h.div."myclass"("content")
     # <div class="myclass">content</div>
 """
-h(tag, children...; kw...) = Node(tag, attrs(kw), collect(children))
+h(tag, children...; kw...) = Node(Symbol(tag), attrs(kw), collect(children))
 
 h(tag, attrs::AbstractDict, children...) = Node(tag, attrs, collect(children))
 
@@ -170,19 +161,23 @@ Base.getproperty(::typeof(h), tag::Symbol) = h(tag)
 Base.propertynames(::typeof(h)) = HTML5_TAGS
 
 #-----------------------------------------------------------------------------# @h
+"""
+    @h ex
+
+Convert any valid HTML `<tag>` in `ex` to `Cobweb.h.<tag>`.
+
+### Examples
+
+    @h div(p("This is a paragraph"), p("Here is some", strong("bold"), "text"))
+    # <div><p>This is a paragraph</p><p>Here is some<strong>bold</strong>text</p></div>
+"""
 macro h(ex)
     esc(_h(ex))
 end
 
-function _h(ex::Expr)
-    for (i, x) in enumerate(ex.args)
-        ex.args[i] = x isa Expr ? _h(x) :
-            x isa Symbol && x in HTML5_TAGS ? Expr(:., :(Cobweb.h), QuoteNode(x)) :
-            x
-    end
-    ex
-end
-_h(x::Symbol) = x in propertynames(typeof(h)) ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
+_h(ex::Expr) = (ex.args .= _h.(ex.args); return ex)
+_h(x::Symbol) = x in propertynames(h) ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
+_h(x) = x
 
 #-----------------------------------------------------------------------------# escape
 escape_chars = ['&' => "&amp;", '"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;"]

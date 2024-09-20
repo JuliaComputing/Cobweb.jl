@@ -1,6 +1,5 @@
-using Cobweb
-using Cobweb: h, Page, Node, attrs, tag, children
-using Test
+using Cobweb, Test, OrderedCollections
+using Cobweb: h, Node, attrs, tag, children
 
 n1 = h.div("hi")
 n2 = h(:div, "hi")
@@ -8,6 +7,7 @@ n2 = h(:div, "hi")
 #-----------------------------------------------------------------------------# Creating Nodes
 @testset "Node Creation" begin
     for node in [
+            Node(:div, OrderedDict(:id => "my_id"), (["test"])),
             h(:div),
             h.div(),
             h(:div, "child"),
@@ -24,6 +24,7 @@ n2 = h(:div, "hi")
     @test n1 == n2
 
     # _h
+    @test Cobweb._h(:div) == :(Cobweb.h.div)
     @test Cobweb._h(:(div("hi"))) == :(Cobweb.h.div("hi"))
     @test Cobweb.@h div(b(), hr(), p("text")) == h.div(h.b(), h.hr(), h.p("text"))
 
@@ -38,6 +39,20 @@ n2 = h(:div, "hi")
     @test_throws BoundsError n[2]
     n[1] = "new"
     @test n[1] == "new"
+end
+#-----------------------------------------------------------------------------# Attributes
+@testset "Attributes and Children access/mutation" begin
+    node = h.div(id="myid", class="myclass", "content")
+    @test propertynames(node) == [:id, :class]
+    @test get(node, :id, 1) == "myid"
+    @test get(node, :id2, 1) == 1
+    get!(node, :id2, "myid2")
+    @test propertynames(node) == [:id, :class, :id2]
+    @test node[end] == "content"
+    push!(node, h.span("child"))
+    @test node[end] == h.span("child")
+    append!(node, [h.span("child2"), h.span("child3")])
+    @test node[end] == h.span("child3")
 end
 #-----------------------------------------------------------------------------# indexing
 @testset "get/setindex" begin

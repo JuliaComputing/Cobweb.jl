@@ -11,11 +11,6 @@
 - **Write HTML**: Clean syntax for writing HTML: `h.<tag>(children...; attrs...)`
 - **Read HTML**: `Cobweb.read`.
 
-```julia
-h.div(class="myclass", style="color:red;")("content!")
-# <div class="myclass" style="color:red;">content!</div>
-```
-
 <br><br>
 
 ## 🚀 Quickstart

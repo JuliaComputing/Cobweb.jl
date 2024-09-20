@@ -66,6 +66,10 @@ end
 @testset "HTML" begin
     @test repr(n1) == "<div>hi</div>"
 end
+#-----------------------------------------------------------------------------# preview
+@testset "preview" begin
+    get(ENV, "CI", "false") == "true" && @test preview(h.div("hi")) isa Base.Process
+end
 #-----------------------------------------------------------------------------# Javascript
 @testset "Javascript" begin
     @test repr("text/javascript", Cobweb.Javascript("x")) == "x"

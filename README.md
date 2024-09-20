@@ -5,7 +5,7 @@
 
 <p align="center">A Julia package for <i>cob</i>bling together <i>web</i> pages.</p>
 
-# Features
+# ⭐ Features
 
 - Open `"text/html"`-representable objects in your browser with `preview(x)`.
 - Clean syntax for writing HTML: `h.<tag>(children...; attrs...)`

@@ -50,7 +50,8 @@ tag(o::Node) = getfield(o, :tag)
 attrs(o::Node) = getfield(o, :attrs)
 children(o::Node) = getfield(o, :children)
 
-attrs(kw::AbstractDict) = OrderedDict(Symbol(k) => string(v) for (k,v) in pairs(kw))
+attr_symbol(x) = Symbol(replace(string(x), '_' => '-'))
+attrs(kw::AbstractDict) = OrderedDict(attr_symbol(k) => string(v) for (k,v) in pairs(kw))
 
 (o::Node)(x...; kw...) = Node(tag(o), merge(attrs(o), attrs(kw)), vcat(children(o), x...))
 

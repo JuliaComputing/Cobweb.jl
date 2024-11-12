@@ -4,7 +4,7 @@ using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 using OrderedCollections: OrderedDict
 
-export Page, Tab, h, preview, IFrame, @js_str, @css_str
+export h, preview, IFrame, @js_str, @css_str
 
 #-----------------------------------------------------------------------------# init
 function __init__()

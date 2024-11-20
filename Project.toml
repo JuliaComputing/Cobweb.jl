@@ -1,22 +1,26 @@
 name = "Cobweb"
 uuid = "ec354790-cf28-43e8-bb59-b484409b7bad"
 authors = ["joshday <emailjoshday@gmail.com> and contributors"]
-version = "0.7.2"
+version = "0.8.0"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 DefaultApplication = "3f0dd361-4fe0-5fc6-8523-80b14ec94d85"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
+StyledStrings = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
 
 [compat]
+AbstractTrees = "0.4"
 DefaultApplication = "1"
 OrderedCollections = "1"
 Scratch = "1"
+StyledStrings = "1.11"
 julia = "1"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "Markdown"]

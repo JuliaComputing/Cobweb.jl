@@ -3,8 +3,10 @@ module Cobweb
 using DefaultApplication: DefaultApplication
 using Scratch: @get_scratch!
 using OrderedCollections: OrderedDict
+using StyledStrings: @styled_str
+import AbstractTrees: printnode, print_tree, children
 
-export h, preview, IFrame, @js_str, @css_str
+export h, preview, IFrame, Style, @js_str, @css_str
 
 #-----------------------------------------------------------------------------# init
 function __init__()
@@ -36,7 +38,7 @@ Should not often be used directly.  See `?Cobweb.h`.
 """
 struct Node
     tag::Symbol
-    attrs::OrderedDict{Symbol, String}
+    attrs::OrderedDict{Symbol, Any}
     children::Vector{Any}
     function Node(tag, attributes, children)
         sym = Symbol(tag)
@@ -51,7 +53,7 @@ attrs(o::Node) = getfield(o, :attrs)
 children(o::Node) = getfield(o, :children)
 
 attr_symbol(x) = Symbol(replace(string(x), '_' => '-'))
-attrs(kw::AbstractDict) = OrderedDict(attr_symbol(k) => string(v) for (k,v) in pairs(kw))
+attrs(kw::AbstractDict) = OrderedDict{Symbol,Any}(attr_symbol(k) => v for (k,v) in pairs(kw))
 
 (o::Node)(x...; kw...) = Node(tag(o), merge(attrs(o), attrs(kw)), vcat(children(o), x...))
 
@@ -97,16 +99,22 @@ function print_opening_tag(io::IO, o::Node; self_close::Bool = false)
         print(io, '>')
 end
 
-function Base.show(io::IO, o::Node)
+function printnode(io::IO, o::Node)
+    print_opening_tag(io, o)
+    print(io, styled" {gray:($(length(children(o))) children)}")
+end
+Base.show(io::IO, o::Node; kw...) = print_tree(io, o; kw...)
+
+function Base.show(io::IO, ::MIME"text/html", o::Node)
     p(args...) = print(io, args...)
     print_opening_tag(io, o)
     foreach(x -> showable("text/html", x) ? show(io, MIME("text/html"), x) : p(x), children(o))
     tag(o) in VOID_ELEMENTS || p("</", tag(o), '>')
 end
 
-Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
-Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, node)
-Base.show(io::IO, ::MIME"application/xml", node::Node) = show(io, node)
+# Base.show(io::IO, ::MIME"text/html", node::Node) = show(io, node)
+Base.show(io::IO, ::MIME"text/xml", node::Node) = show(io, MIME("text/html"), node)
+Base.show(io::IO, ::MIME"application/xml", node::Node) = show(io, MIME("text/html"), node)
 
 Base.write(io::IO, node::Node) = show(io, MIME"text/html"(), node)
 
@@ -158,6 +166,8 @@ Create an html node with the given `tag`, `children`, and `kw` attributes.
 h(tag, children...; kw...) = Node(Symbol(tag), attrs(kw), collect(children))
 
 h(tag, attrs::AbstractDict, children...) = Node(tag, attrs, collect(children))
+
+h() = Node("", OrderedDict{Symbol, Any}(), [])
 
 Base.getproperty(::typeof(h), tag::Symbol) = h(tag)
 
@@ -260,6 +270,22 @@ end
 function Base.show(io::IO, ::MIME"text/html", o::IFrame{T}) where {T}
     show(io, h.iframe(; srcdoc=escape(repr("text/html", o.content)), o.kw...))
 end
+
+#-----------------------------------------------------------------------------# Style
+struct Style <: AbstractDict{Symbol, Any}
+    dict::OrderedDict{Symbol, Any}
+    Style(x...) = new(OrderedDict{Symbol, Any}(x...))
+    Style(; kw...) = new(OrderedDict{Symbol, Any}(kw...))
+end
+Base.show(io::IO, o::Style) = join(io, ("$k:$v" for (k,v) in pairs(getfield(o, :dict))), "; ")
+Base.length(o::Style) = length(getfield(o, :dict))
+Base.iterate(o::Style, state...) = iterate(getfield(o, :dict), state...)
+Base.keys(o::Style) = keys(getfield(o, :dict))
+Base.getindex(o::Style, k::Symbol) = getindex(getfield(o, :dict), k)
+Base.setindex!(o::Style, v::Symbol, k::Symbol) = setindex!(getfield(o, :dict), v, k)
+Base.propertynames(o::Style) = keys(o)
+Base.getproperty(o::Style, k::Symbol) = o[k]
+Base.setproperty!(o::Style, k::Symbol, v) = (o[k] = v)
 
 include("parser.jl")
 

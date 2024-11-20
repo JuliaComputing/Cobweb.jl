@@ -85,7 +85,7 @@ end
 end
 #-----------------------------------------------------------------------------# HTML
 @testset "HTML" begin
-    @test repr(n1) == "<div>hi</div>"
+    @test repr("text/html", n1) == "<div>hi</div>"
 end
 #-----------------------------------------------------------------------------# preview
 @testset "preview" begin
@@ -135,6 +135,15 @@ end
 #-----------------------------------------------------------------------------# pretty
 @testset "pretty" begin
     @test Cobweb.pretty(h.div(h.p("A"), h.p("B"))) == "<div>\n    <p>A</p>\n    <p>B</p>\n</div>"
+end
+
+
+#-----------------------------------------------------------------------------# Style
+@testset "Style" begin
+    n = h.div(style=Style(color = :red))
+    @test n.style.color == :red
+    n.style.color = :blue
+    @test occursin("blue", repr("text/html", n))
 end
 
 #-----------------------------------------------------------------------------# other

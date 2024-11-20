@@ -142,8 +142,14 @@ end
 @testset "Style" begin
     n = h.div(style=Style(color = :red))
     @test n.style.color == :red
-    n.style.color = :blue
+    n.style.color = "blue"
     @test occursin("blue", repr("text/html", n))
+end
+
+#-----------------------------------------------------------------------------# Children
+@testset "Children" begin
+    c = Children(h.p("A"), h.p("B"))
+    @test html(c) == "<p>A</p><p>B</p>"
 end
 
 #-----------------------------------------------------------------------------# other

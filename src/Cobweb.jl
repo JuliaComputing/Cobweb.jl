@@ -6,7 +6,7 @@ using OrderedCollections: OrderedDict
 using StyledStrings: @styled_str
 import AbstractTrees: printnode, print_tree, children
 
-export h, preview, IFrame, Style, @js_str, @css_str
+export h, preview, IFrame, Style, Children, @js_str, @css_str
 
 #-----------------------------------------------------------------------------# init
 function __init__()
@@ -167,8 +167,6 @@ h(tag, children...; kw...) = Node(Symbol(tag), attrs(kw), collect(children))
 
 h(tag, attrs::AbstractDict, children...) = Node(tag, attrs, collect(children))
 
-h() = Node("", OrderedDict{Symbol, Any}(), [])
-
 Base.getproperty(::typeof(h), tag::Symbol) = h(tag)
 
 Base.propertynames(::typeof(h)) = HTML5_TAGS
@@ -272,6 +270,21 @@ function Base.show(io::IO, ::MIME"text/html", o::IFrame{T}) where {T}
 end
 
 #-----------------------------------------------------------------------------# Style
+"""
+    Style(; kw...)
+
+Create a style object (for inline styles) with the given `kw` attributes.
+
+### Examples
+
+    using Cobweb
+
+    node = h.div("content", style=Style(color="red", font_size="20px"))
+
+    node.style.color = "blue"
+
+    preview(node)
+"""
 struct Style <: AbstractDict{Symbol, Any}
     dict::OrderedDict{Symbol, Any}
     Style(x...) = new(OrderedDict{Symbol, Any}(x...))
@@ -282,11 +295,35 @@ Base.length(o::Style) = length(getfield(o, :dict))
 Base.iterate(o::Style, state...) = iterate(getfield(o, :dict), state...)
 Base.keys(o::Style) = keys(getfield(o, :dict))
 Base.getindex(o::Style, k::Symbol) = getindex(getfield(o, :dict), k)
-Base.setindex!(o::Style, v::Symbol, k::Symbol) = setindex!(getfield(o, :dict), v, k)
+Base.setindex!(o::Style, v, k::Symbol) = setindex!(getfield(o, :dict), v, k)
 Base.propertynames(o::Style) = keys(o)
 Base.getproperty(o::Style, k::Symbol) = o[k]
 Base.setproperty!(o::Style, k::Symbol, v) = (o[k] = v)
 
+#-----------------------------------------------------------------------------# Children
+"""
+    Children(x...)
+
+Join the given `x` values into a single object.
+
+### Example
+
+    node = Cobweb.Children(h.div("first"), h.p("second"))
+
+    repr("text/html", node) == "<div>first</div><p>second</p>"
+"""
+struct Children
+    x::Vector
+    Children(x::AbstractVector) = new(collect(x))
+    Children(x...) = new(collect(x))
+end
+Base.show(io::IO, ::MIME"text/html", o::Children) = foreach(x -> show(io, MIME("text/html"), x), o.x)
+
+printnode(io::IO, o::Children) = print(io, "Cobweb.Children ", styled"{gray:($(length(o.x)) children)}")
+children(o::Children) = o.x
+Base.show(io::IO, o::Children) = print_tree(io, o)
+
+#-----------------------------------------------------------------------------# parser
 include("parser.jl")
 
 end #module

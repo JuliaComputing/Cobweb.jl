@@ -1,10 +1,113 @@
 using Cobweb, Test, OrderedCollections
-using Cobweb: h, Node, attrs, tag, children
 
-n1 = h.div("hi")
-n2 = h(:div, "hi")
+#-----------------------------------------------------------------------------# basics
+@testset "basics" begin
+    n1 = h.div("hi")
+    n2 = h.div("hi")
+    @test repr("text/html", n1) == repr("text/html", n2) == "<div>hi</div>"
+end
 
-@testset ""
+#-----------------------------------------------------------------------------# help
+@testset "help" begin
+    @test only(help(:a)) isa Cobweb.ElementSpec
+    @test only(help(:id)) isa Cobweb.AttributeSpec
+end
+
+#-----------------------------------------------------------------------------# escaping
+@testset "escaping" begin
+    chars = ['<', '>', ''', '"']
+    for char in chars
+        @test char ∉ Cobweb.escape(join(chars))
+    end
+    @test Cobweb.escape("&") != "&"
+end
+
+#-----------------------------------------------------------------------------# CSSUnits
+@testset "CSSUnits" begin
+    for unit in setdiff(names(Cobweb.CSSUnits), [:CSSUnits])
+        @test 1 * getproperty(Cobweb.CSSUnits, unit) == "1$unit"
+    end
+end
+
+#-----------------------------------------------------------------------------# Style
+@testset "Style" begin
+    s = Style()
+    @test !isempty(propertynames(s))
+    @test isempty(s)
+    s.color = :red
+    @test !isempty(s)
+    @test s.color == "red"
+    @test repr("text/html", s) == "\"color:red\""
+    s.var"font-size" = 12 * Cobweb.CSSUnits.px
+    @test length(s) == 2 && s.var"font-size" == "12px"
+    @test repr("text/html", s) == "\"color:red; font-size:12px\""
+
+    a = Style(color = :red, var"font-size" = 12 * Cobweb.CSSUnits.px)
+    b = Style(color = :blue, var"font-size" = 14 * Cobweb.CSSUnits.px)
+    c = merge(a, b)
+    @test a.color == "red"
+    @test b.color == "blue"
+    @test c.color == "blue"
+    merge!(a, b)
+    @test a.color == "blue"
+end
+
+#-----------------------------------------------------------------------------# Class
+@testset "Class" begin
+    c = Class()
+    @test !isempty(propertynames(c))
+    @test isempty(c)
+    push!(c, "class1")
+    @test length(c) == 1
+    @test repr("text/html", c) == "\"class1\""
+    append!(c, ["class2", "class3"])
+    @test length(c) == 3
+    @test repr("text/html", c) == "\"class1 class2 class3\""
+
+    a = Class("one", "two")
+    b = Class("three four")
+    c = merge(a, b)
+    @test length(a) == length(b) == 2
+    @test length(c) == 4
+    merge!(a, b)
+    @test length(a) == 4
+end
+
+#-----------------------------------------------------------------------------# Attributes
+@testset "Attributes" begin
+    a = Attributes()
+    @test !isempty(propertynames(a))
+    @test isempty(a)
+    a.id = "myid"
+    @test length(a) == 1
+    @test repr("text/html", a) == "id=\"myid\""
+    a.class = "myclass"
+    @test length(a) == 2
+    @test repr("text/html", a) == "id=\"myid\" class=\"myclass\""
+
+    a = Attributes(id="myid", class="myclass")
+    b = Attributes(id="myid2", class="myclass2")
+    c = merge(a, b)
+    @test length(a) == 2
+    @test a.id == "myid"
+    @test b.id == "myid2"
+    @test c.id == "myid2"
+    merge!(a, b)
+    @test a.id == "myid2"
+    @test length(a) == 2
+    @test a.class isa Class
+    @test a.style isa Style
+    @test a.id isa String
+end
+
+#-----------------------------------------------------------------------------# Element
+@testset "Element" begin
+    e = Element(:div)
+    @test Cobweb.name(e) == :div
+    @test repr("text/html", e) == "<div></div>"
+    @test repr("text/html", h.div) == "<div></div>"
+    @test repr("text/html", h.div("hi")) == "<div>hi</div>"
+end
 
 # #-----------------------------------------------------------------------------# Creating Nodes
 # @testset "Node Creation" begin
@@ -103,14 +206,7 @@ n2 = h(:div, "hi")
 #     @test repr("text/css", Cobweb.CSS("x")) == "x"
 #     @test repr("text/html", Cobweb.CSS("x")) == "<style>x</style>"
 # end
-# #-----------------------------------------------------------------------------# escaping
-# @testset "escaping" begin
-#     chars = ['<', '>', ''', '"']
-#     for char in chars
-#         @test char ∉ Cobweb.escape(join(chars))
-#     end
-#     @test Cobweb.escape("&") != "&"
-# end
+
 # #-----------------------------------------------------------------------------# docs
 # @testset "Docs Build (read/write)" begin
 #     include(joinpath(@__DIR__, "..", "docs", "make.jl"))

@@ -48,8 +48,8 @@ css_properties = process_css_match.(x3)
 function process_name_match(m::RegexMatch)
     is_deprecated = occursin("Deprecated", only(m))
     is_experimental = occursin("Experimental", only(m))
-    name = Symbol(replace(strip(only(m)), "\\n" => "", "Deprecated" => "", "Experimental" => "",
-        isspace=>"", r"<.*?>"=>"", "&lt;" => "", "&gt;" => ""))
+    name = Symbol(replace(only(m),  r"(.*?)<code>"=>"", r"</code>(.*)" => "", "&lt;" => "", "&gt;" => "",
+                r"<.*?>"=>""))
     (;name, is_deprecated, is_experimental)
 end
 function process_description_match(m::RegexMatch)
@@ -77,15 +77,28 @@ function ElementSpec(m::RegexMatch)
 end
 
 attrs = AttributeSpec.(x)
-tags = ElementSpec.(x2)
+elements = ElementSpec.(x2)
+
+i = findfirst(x -> x.name == :h6, elements)
+deleteat!(elements, i)
+
+h1 = ElementSpec(:h1, false, false, "The h1 element represents the highest level of a section heading.", [])
+h2 = ElementSpec(:h2, false, false, "The h2 element represents a section heading.", [])
+h3 = ElementSpec(:h3, false, false, "The h3 element represents a section heading.", [])
+h4 = ElementSpec(:h4, false, false, "The h4 element represents a section heading.", [])
+h5 = ElementSpec(:h5, false, false, "The h5 element represents a section heading.", [])
+h6 = ElementSpec(:h6, false, false, "The h6 element represents the lowest level of a section heading.", [])
+
+append!(elements, [h1, h2, h3, h4, h5, h6])
+
 
 
 for attr in attrs
     for e in attr.elements
-        for tag in tags
-            if tag.name == e
-                push!(tag.attributes, attr.name)
-                unique!(tag.attributes)
+        for element in elements
+            if element.name == e
+                push!(element.attributes, attr.name)
+                unique!(element.attributes)
             end
         end
     end
@@ -105,13 +118,13 @@ open(joinpath(@__DIR__, "..", "src", "generated.jl"), "w") do io
 
     const GLOBAL_ATTRIBUTES = $GLOBAL_ATTRIBUTES
 
-    const ATTRIBUTES = Dict{Symbol,AttributeSpec}(
+    const ATTRIBUTES = sort(LittleDict{Symbol,AttributeSpec}(
         $(["Symbol(\"$(attr.name)\") => $attr,\n    " for attr in attrs]...)
-    )
+    ))
 
-    const ELEMENTS = Dict{Symbol,ElementSpec}(
-        $(["Symbol(\"$(tag.name)\") => $tag,\n    " for tag in tags]...)
-    )
+    const ELEMENTS = sort(LittleDict{Symbol,ElementSpec}(
+        $(["Symbol(\"$(el.name)\") => $el,\n    " for el in elements]...)
+    ))
     """)
 end
 

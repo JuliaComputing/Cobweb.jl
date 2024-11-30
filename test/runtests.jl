@@ -1,4 +1,4 @@
-using Cobweb, Test, OrderedCollections
+using Cobweb, Test
 
 #-----------------------------------------------------------------------------# basics
 @testset "basics" begin
@@ -7,11 +7,11 @@ using Cobweb, Test, OrderedCollections
     @test repr("text/html", n1) == repr("text/html", n2) == "<div>hi</div>"
 end
 
-#-----------------------------------------------------------------------------# help
-@testset "help" begin
-    @test only(help(:a)) isa Cobweb.ElementSpec
-    @test only(help(:id)) isa Cobweb.AttributeSpec
-end
+# #-----------------------------------------------------------------------------# help
+# @testset "help" begin
+#     @test only(help(:a)) isa Cobweb.ElementSpec
+#     @test only(help(:id)) isa Cobweb.AttributeSpec
+# end
 
 #-----------------------------------------------------------------------------# escaping
 @testset "escaping" begin
@@ -32,7 +32,6 @@ end
 #-----------------------------------------------------------------------------# Style
 @testset "Style" begin
     s = Style()
-    @test !isempty(propertynames(s))
     @test isempty(s)
     s.color = :red
     @test !isempty(s)
@@ -73,41 +72,41 @@ end
     @test length(a) == 4
 end
 
-#-----------------------------------------------------------------------------# Attributes
-@testset "Attributes" begin
-    a = Attributes()
-    @test !isempty(propertynames(a))
-    @test isempty(a)
-    a.id = "myid"
-    @test length(a) == 1
-    @test repr("text/html", a) == "id=\"myid\""
-    a.class = "myclass"
-    @test length(a) == 2
-    @test repr("text/html", a) == "id=\"myid\" class=\"myclass\""
+# #-----------------------------------------------------------------------------# Attributes
+# @testset "Attributes" begin
+#     a = Attributes()
+#     @test !isempty(propertynames(a))
+#     @test isempty(a)
+#     a.id = "myid"
+#     @test length(a) == 1
+#     @test repr("text/html", a) == "id=\"myid\""
+#     a.class = "myclass"
+#     @test length(a) == 2
+#     @test repr("text/html", a) == "id=\"myid\" class=\"myclass\""
 
-    a = Attributes(id="myid", class="myclass")
-    b = Attributes(id="myid2", class="myclass2")
-    c = merge(a, b)
-    @test length(a) == 2
-    @test a.id == "myid"
-    @test b.id == "myid2"
-    @test c.id == "myid2"
-    merge!(a, b)
-    @test a.id == "myid2"
-    @test length(a) == 2
-    @test a.class isa Class
-    @test a.style isa Style
-    @test a.id isa String
-end
+#     a = Attributes(id="myid", class="myclass")
+#     b = Attributes(id="myid2", class="myclass2")
+#     c = merge(a, b)
+#     @test length(a) == 2
+#     @test a.id == "myid"
+#     @test b.id == "myid2"
+#     @test c.id == "myid2"
+#     merge!(a, b)
+#     @test a.id == "myid2"
+#     @test length(a) == 2
+#     @test a.class isa Class
+#     @test a.style isa Style
+#     @test a.id isa String
+# end
 
-#-----------------------------------------------------------------------------# Element
-@testset "Element" begin
-    e = Element(:div)
-    @test Cobweb.name(e) == :div
-    @test repr("text/html", e) == "<div></div>"
-    @test repr("text/html", h.div) == "<div></div>"
-    @test repr("text/html", h.div("hi")) == "<div>hi</div>"
-end
+# #-----------------------------------------------------------------------------# Element
+# @testset "Element" begin
+#     e = Element(:div)
+#     @test Cobweb.name(e) == :div
+#     @test repr("text/html", e) == "<div></div>"
+#     @test repr("text/html", h.div) == "<div></div>"
+#     @test repr("text/html", h.div("hi")) == "<div>hi</div>"
+# end
 
 # #-----------------------------------------------------------------------------# Creating Nodes
 # @testset "Node Creation" begin

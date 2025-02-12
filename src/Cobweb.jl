@@ -1,16 +1,26 @@
 module Cobweb
 
-using DefaultApplication: DefaultApplication
+using DefaultApplication
 using OrderedCollections: OrderedDict
-using StyledStrings: @styled_str
-import AbstractTrees: printnode, print_tree, children
+using StyledStrings
 
-export help, h, @h, preview, webdocs, Style, Class, Attributes, Children, Element, Document, IFrame, iframe
+export Page, Document, Style, Class, Attributes, Element, escape, unescape, escape!, unescape!
 
 #-----------------------------------------------------------------------------# init
+DIR::String = ""
+INDEX::String = ""
+
 function __init__()
     global DIR = mktempdir()
+    global INDEX = joinpath(DIR, "index.html")
 end
+
+#-----------------------------------------------------------------------------# consts
+const ESCAPE_CHARS = ('&' => "&amp;", '"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;")
+const VOID_ELEMENTS = (:area,:base,:br,:col,:embed,:hr,:img,:input,:link,:meta,:param,:source,:track,:wbr)
+const CSS_UNITS = (:ch,:cm,:em,:ex,:fr,:in,:mm,:pc,:percent,:pt,:px,:rem,:vh,:vmax,:vmin,:vw)
+
+include("Reference.jl")
 
 #-----------------------------------------------------------------------------# (un)escape
 escape(x::AbstractString) = replace(x, ESCAPE_CHARS...)
@@ -18,342 +28,193 @@ unescape(x::AbstractString) = replace(x, reverse.(ESCAPE_CHARS)...)
 escape!(x) = (children(x) .= escape.(children(x)); return x)
 unescape!(x) = (children(x) .= unescape.(children(x)); return x)
 
-#-----------------------------------------------------------------------------# consts
-const ESCAPE_CHARS = ('&' => "&amp;", '"' => "&quot;", ''' => "&#39;", '<' => "&lt;", '>' => "&gt;")
-const VOID_ELEMENTS = (:area,:base,:br,:col,:embed,:hr,:img,:input,:link,:meta,:param,:source,:track,:wbr)
+#-----------------------------------------------------------------------------# Page
+"""
+    Page(x)
 
-include("generated.jl")  # add consts: ELEMENTS, GLOBAL_ATTRIBUTES, ATTRIBUTES
-
-STYLE_PROPERTIES::Vector{Symbol} = []
-CLASS_PROPERTIES::Vector{Symbol} = []
-
-#-----------------------------------------------------------------------------# preview
-function preview(x; reuse=true)
-    file = reuse ? joinpath(DIR, "index.html") : string(tempname(), ".html")
-    x2 = showable("text/html", x) ? x : HTML(x)
-    Base.open(io -> show(io, MIME("text/html"), x2), touch(file), "w")
-    DefaultApplication.open(file)
+`Base.display` `x` in a web browser using its `MIME"text/html"` representation.
+"""
+struct Page
+    x
 end
-
-#-----------------------------------------------------------------------------# webdocs
-webdocs(x::Symbol) = DefaultApplication.open("https://developer.mozilla.org/en-US/docs/Web/HTML/Element/$x")
-Base.getproperty(::typeof(webdocs), x::Symbol) = webdocs(x)
-Base.propertynames(::typeof(webdocs)) = keys(ELEMENTS)
-
-#-----------------------------------------------------------------------------# CSSUnits
-module CSSUnits
-    struct Unit{sym} end
-    Base.:(*)(x::Number, u::Unit) = string(x, u)
-    Base.show(io::IO, u::Unit{T}) where {T} = print(io, T)
-    for unit in [:ch,:cm,:em,:ex,:fr,:in,:mm,:pc,:percent,:pt,:px,:rem,:vh,:vmax,:vmin,:vw]
-        @eval export $unit
-        @eval $unit = Unit{$(QuoteNode(unit))}()
+function Base.show(io::IO, p::Page)
+    open(INDEX, "w") do io
+        show(io, MIME"text/html"(), showable("text/html", p.x) ? p.x : HTML(p.x))
     end
+    DefaultApplication.open(INDEX)
 end
-
-#-----------------------------------------------------------------------------# Style
-struct Style <: AbstractDict{Symbol, String}
-    dict::OrderedDict{Symbol, String}
-end
-dict(o::Style) = getfield(o, :dict)
-Style(o::Style) = o
-function Style(; kw...)
-    o = Style(OrderedDict{Symbol, String}())
-    for (k,v) in pairs(kw)
-        o[k] = string(v)
-    end
-    return o
-end
-function Style(s::AbstractString)
-    out = Style()
-    for entry in split(s, ';')
-        k, v = split(entry, ':')
-        out[Symbol(strip(k))] = strip(v)
-    end
-    return out
-end
-function Base.show(io::IO, ::MIME"text/html", s::Style)
-    print(io, '"')
-    join(io, (string(k, ':', v) for (k,v) in getfield(s, :dict)), "; ")
-    print(io, '"')
-end
-Base.length(o::Style) = length(dict(o))
-Base.keys(o::Style) = keys(dict(o))
-Base.values(o::Style) = values(dict(o))
-Base.iterate(o::Style, state...) = iterate(dict(o), state...)
-Base.getindex(o::Style, k::Symbol) = get(dict(o), k, nothing)
-Base.getindex(o::Style, k::AbstractString) = getindex(o, Symbol(k))
-Base.setindex!(o::Style, v, k::Symbol) = setindex!(dict(o), string(v), k)
-Base.setindex!(o::Style, v, k::AbstractString) = setindex!(o, string(v), Symbol(k))
-Base.copy(o::Style) = Style(copy(dict(o)))
-Base.merge!(o::Style, x::Style...) = (merge!(dict(o), x...); o)
-Base.merge(o::Style, x::Style...) = merge!(copy(o), x...)
-Base.empty!(o::Style) = (empty!(dict(o)); o)
-Base.empty(o::Style) = empty!(copy(o))
-Base.sort!(o::Style; kw...) = (sort!(dict(o); kw...); o)
-Base.sort(o::Style; kw...) = sort!(copy(o); kw...)
-Base.propertynames(o::Style) = keys(dict(o))
-Base.getproperty(o::Style, k::Symbol) = getindex(o, k)
-Base.setproperty!(o::Style, k::Symbol, v) = setindex!(o, v, k)
-
-
-
-#-----------------------------------------------------------------------------# Class
-struct Class <: AbstractVector{Symbol}
-    names::Vector{Symbol}
-end
-Class(names::Union{Symbol, AbstractString}...) = Class(collect(Symbol.(names)))
-Class(s::String) = Class(split(s, ' ')...)
-Class(c::Class) = copy(c)
-
-names(c::Class) = getfield(c, :names)
-Base.iterate(c::Class, state...) = iterate(names(c), state...)
-Base.getindex(c::Class, i::Integer) = names(c)[i]
-Base.setindex!(c::Class, v, i::Integer) = names(c)[i] = v
-Base.size(c::Class) = size(names(c))
-
-Base.push!(c::Class, x) = (push!(names(c), Symbol(x)); c)
-Base.pushfirst!(c::Class, x) = (pushfirst!(names(c), Symbol(x)); c)
-Base.copy(c::Class) = Class(copy(names(c)))
-Base.merge!(a::Class, b::Class) = (union!(append!(names(a), names(b))); a)
-Base.merge(a::Class, b::Class) = merge!(copy(a), b)
-
-# Base.getproperty(o::Class, k::String) = merge(o, Class(k))
-
-function Base.show(io::IO, ::MIME"text/html", c::Class)
-    print(io, '"')
-    join(io, names(c), ' ')
-    print(io, '"')
-end
-Base.string(c::Class) = join(names(c), ' ')
-
-#-----------------------------------------------------------------------------# Attributes
-struct Attributes <: AbstractDict{Symbol, String}
-    style::Style
-    class::Class
-    others::OrderedDict{Symbol, String}
-    function Attributes(style, class, others)
-        for k in keys(others)
-            k in keys(ATTRIBUTES) || k in GLOBAL_ATTRIBUTES || throw(ArgumentError(styled"{red: `$k`} is not a valid HTML attribute."))
-        end
-        new(style, class, others)
-    end
-end
-Attributes(; style=Style(), class=Class(), kw...) = Attributes(Style(style), Class(class), OrderedDict{Symbol, String}(kw...))
-style(o::Attributes) = getfield(o, :style)
-class(o::Attributes) = getfield(o, :class)
-others(o::Attributes) = getfield(o, :others)
-Base.length(o::Attributes) = length(others(o)) + !isempty(style(o)) + !isempty(class(o))
-function OrderedDict(o::Attributes)
-    out = copy(others(o))
-    isempty(style(o)) || (out[:style] = string(style(o)))
-    isempty(class(o)) || (out[:class] = string(class(o)))
-    return out
-end
-Base.iterate(o::Attributes, state...) = iterate(OrderedDict(o), state...)
-
-Base.getindex(o::Attributes, k::Symbol) = k == :style ? style(o) : k == :class ? class(o) : get(others(o), k, nothing)
-Base.getindex(o::Attributes, k::AbstractString) = getindex(o, Symbol(k))
-
-Base.setindex!(o::Attributes, v, k::Symbol) = k == :style ? setindex!(o, Style(v), k) :
-                                              k == :class ? setindex!(o, Class(v), k) :
-                                              setindex!(others(o), v, k)
-Base.setindex!(o::Attributes, v, k::AbstractString) = setindex!(o, v, Symbol(k))
-
-Base.propertynames(o::Attributes) = keys(ATTRIBUTES)
-Base.getproperty(o::Attributes, k::Symbol) = getindex(o, k)
-Base.setproperty!(o::Attributes, k::Symbol, v) = setindex!(o, v, k)
-
-function Base.show(io::IO, ::MIME"text/html", o::Attributes)
-    join(io, (v == true ? k : string(k, '=', '"', v, '"') for (k, v) in o), ' ')
-end
-
-Base.copy(o::Attributes) = Attributes(copy(style(o)), copy(class(o)), copy(others(o)))
-
-function Base.merge!(a::Attributes, b::Attributes)
-    merge!(style(a), style(b))
-    merge!(class(a), class(b))
-    merge!(others(a), others(b))
-    return a
-end
-Base.merge(a::Attributes, b::AbstractDict) = merge!(copy(a), b)
-
-
-#-----------------------------------------------------------------------------# Children
-struct Children <: AbstractVector{Any}
-    items::Vector{Any}
-end
-Children() = Children([])
-Children(items...) = Children(collect(items))
-items(c::Children) = getfield(c, :items)
-Base.size(c::Children) = size(items(c))
-Base.getindex(c::Children, i::Integer) = items(c)[i]
-Base.setindex!(c::Children, v, i::Integer) = items(c)[i] = v
-Base.push!(c::Children, x) = push!(items(c), x)
-Base.pushfirst!(c::Children, x) = pushfirst!(items(c), x)
-Base.deleteat!(c::Children, x) = deleteat!(items(c), x)
-Base.copy(c::Children) = Children(copy(items(c)))
-
-function Base.show(io::IO, ::MIME"text/html", c::Children)
-    foreach(x -> showable("text/html", x) ? show(io, MIME("text/html"), x) : print(io, x), items(c))
-end
-
-#-----------------------------------------------------------------------------# Element
-struct Element
-    name::Symbol
-    attributes::Attributes
-    children::Children
-    function Element(name::Symbol, attr::Attributes, children::Children)
-        name in keys(ELEMENTS) || throw(ArgumentError(styled"{red:<$name>} is not a valid HTML element."))
-        new(name, attr, children)
-    end
-end
-Element(name::Symbol) = Element(name, Attributes(), Children())
-
-# function help(o::Element)
-#     out = []
-#     append!(out, help(name(o)))
-#     for (k, v) in pairs(attrs(o))
-#         append!(out, help(k))
-#     end
-#     return out
-# end
-
-(o::Element)(x...; kw...) = Element(name(o), merge(attrs(o), Attributes(; kw...)), append!(children(o), x))
-
-name(o::Element) = getfield(o, :name)
-attrs(o::Element) = getfield(o, :attributes)
-children(o::Element) = getfield(o, :children)
-
-Base.copy(o::Element) = Element(name(o), copy(attrs(o)), copy(children(o)))
-
-Base.propertynames(o::Element) = union(GLOBAL_ATTRIBUTES, ELEMENTS[name(o)].attributes)
-Base.getproperty(o::Element, k::Symbol) = attrs(o)[k]
-Base.setproperty!(o::Element, k::Symbol, v) = attrs(o)[k] = v
-
-function Base.getproperty(o::Element, k::String)
-    out = copy(o)
-    push!(out.class, Symbol(k))
-    return out
-end
-
-Base.getindex(o::Element, i::Integer) = children(o)[i]
-Base.setindex!(o::Element, v, i::Integer) = children(o)[i] = v
-Base.length(o::Element) = length(children(o))
-Base.push!(o::Element, x) = push!(children(o), x)
-Base.pushfirst!(o::Element, x) = pushfirst!(children(o), x)
-Base.deleteat!(o::Element, x) = deleteat!(children(o), x)
-
-function print_opening(io::IO, o::Element)
-    print(io, '<', name(o), isempty(attrs(o)) ? "" : " ")
-    show(io, MIME("text/html"), attrs(o))
-    print(io, '>')
-end
-function printnode(io::IO, o::Element)
-    s = sprint(print_opening, o)
-    print(io, styled"{bright_cyan:$s}", styled" {gray:($(length(children(o))) children)}")
-end
-Base.show(io::IO, ::MIME"text/plain", o::Element) = print_tree(io, o)
-
-function Base.show(io::IO, ::MIME"text/html", o::Element)
-    print_opening(io, o)
-    show(io, MIME("text/html"), children(o))
-    name(o) in VOID_ELEMENTS || print(io, "</", name(o), '>')
-end
-
-#-----------------------------------------------------------------------------# h
-h(tag, children...; kw...) = Element(tag, Attributes(; kw...), Children(children...))
-
-Base.propertynames(::typeof(h)) = keys(ELEMENTS)
-Base.getproperty(::typeof(h), tag::Symbol) = h(tag)
 
 #-----------------------------------------------------------------------------# Document
 struct Document
-    children::Children
+    x
 end
-Document(children...) = Document(Children(children...))
+function Base.show(io::IO, ::MIME"text/html", d::Document)
+    print(io, "<!DOCTYPE html>")
+    show(io, MIME"text/html"(), showable("text/html", d.x) ? d.x : HTML(d.x))
+end
 
-function Base.show(io::IO, ::MIME"text/html", o::Document)
-    println(io, "<!DOCTYPE html>")
-    show(io, MIME("text/html"), o.children)
+#-----------------------------------------------------------------------------# webdocs
+help(x::Symbol) = DefaultApplication.open("https://developer.mozilla.org/en-US/docs/Web/HTML/Element/$x")
+Base.getproperty(::typeof(help), x::Symbol) = help(x)
+Base.propertynames(::typeof(help)) = keys(Reference.ELEMENTS)
+
+#-----------------------------------------------------------------------------# Settings
+baremodule Settings
+    using Base: Set
+
+    "Cobweb.jl should verify valid HTML5 elements are used."
+    check_elements::Bool = true
+
+    "Cobweb.jl should verfify valid HTML5 attributes are used for a given element."
+    check_attributes::Bool = true
+
+    "Cobweb.jl should verify all classes come from Settings.classes"
+    check_classes::Bool = false
+    classes::Set{Symbol} = Set()
+
+    style_properties::Set{Symbol} = Set()
+
+    "Cobweb.jl should allow deprecated elements to be used."
+    allow_deprecated_elements::Bool = false
+
+    "Cobweb.jl should allow deprecated attributes to be used."
+    allow_deprecated_attributes::Bool = false
+end  # Settings module
+
+#-----------------------------------------------------------------------------# KV
+# Wrapper of an OrderedDict{Symbol, String} to represent key-value pairs.
+# Returns `nothing` if a valid key is used, but not present in the dictionary.
+abstract type KV <: AbstractDict{Symbol, Union{Nothing, String}} end
+dict(o::KV) = getfield(o, :dict)
+Base.propertynames(o::KV) = keys(o)
+Base.getproperty(o::KV, x::Symbol) = getindex(o, x)
+Base.setproperty!(o::KV, x::Symbol, v) = setindex!(o, v, x)
+for f in (:length, :iterate)
+    @eval Base.$f(o::KV, x...) = $f(dict(o), x...)
 end
+dict(kw) = OrderedDict(Symbol(k) => string(v) for (k, v) in pairs(kw))
+
+#-----------------------------------------------------------------------------# Style
+mutable struct Style <: KV
+    dict::OrderedDict{Symbol, String}
+end
+Style(; kw...) = Style(dict(kw))
+Style(x::Style) = x
+function Style(s::AbstractString)
+    out = Style()
+    for entry in split(s, ';'; keepempty=false)
+        k, v = split(entry, ':'; keepempty=false)
+        setproperty!(out, Symbol(strip(k)), strip(v))
+    end
+    return out
+end
+Base.keys(o::Style) = union(keys(dict(o)), Settings.style_properties)
+Base.getindex(o::Style, x::Symbol) = get(dict(o), x, nothing)
+Base.setindex!(o::Style, v, x::Symbol) = setindex!(dict(o), v, x)
+Base.print(io::IO, s::Style) = join(io, ("$k:$v" for (k, v) in s), ';')
+Base.show(io::IO, ::MIME"text/html", s::Style) = print(io, '"', s, '"')
+
+
+#-----------------------------------------------------------------------------# Class
+mutable struct Class <: AbstractSet{Symbol}
+    set::Set{Symbol}
+end
+Class(x::Symbol...) = Class(Set(x))
+Class(x::Class) = x
+Class(x::AbstractString) = Class(Symbol.(split(x, ' '; keepempty=false))...)
+for f in (:iterate, :length, :push!, :delete!)
+    @eval Base.$f(o::Class, x...) = $f(getfield(o, :set), x...)
+end
+Base.print(io::IO, c::Class) = join(io, c, ' ')
+Base.show(io::IO, ::MIME"text/html", c::Class) = print(io, '"', c, '"')
+
+#-----------------------------------------------------------------------------# Attributes
+mutable struct Attributes <: KV
+    style::Style
+    class::Class
+    dict::OrderedDict{Symbol, Union{String}}
+    element::Symbol
+    function Attributes(element=:unknown; style=Style(), class=Class(), kw...)
+        new(Style(style), Class(class), dict(kw), element)
+    end
+end
+style(o::Attributes) = getfield(o, :style)
+class(o::Attributes) = getfield(o, :class)
+Base.keys(o::Attributes) = union(get(Reference.ELEMENTS, getfield(o, :element), Symbol[]), Reference.GLOBAL_ATTRIBUTES)
+check_key(o::Attributes, x::Symbol) = Settings.check_attributes && x ∉ keys(o) ? error(":$x is not a valid attribute for element :$(getfield(o, :element)).") : x
+Base.getindex(o::Attributes, x::Symbol) = check_key(o, x) in (:style, :class) ? getfield(o, x) : get(dict(o), x, nothing)
+Base.setindex!(o::Attributes, v, x::Symbol) = check_key(o, x) == :style ? setfield!(o, x, Style(v)) :
+    x == :class ? setfield!(o, x, Class(v)) :
+    setindex!(dict(o), v, x)
+Base.length(o::Attributes) = length(dict(o)) + length(o.style) + length(o.class)
+Base.iterate(o::Attributes) = Base.iterate(o, -1)
+function Base.iterate(o::Attributes, i)
+    i == -1 && return !isempty(style(o)) ? (:style => string(style(o)), 0) : iterate(o, 0)
+    i == 0 && return !isempty(class(o)) ? (:class => string(class(o)), 1) : iterate(o, 1)
+    return iterate(dict(o), i)
+end
+Base.print(io::IO, o::Attributes) = join(io, (v=="true" ? v : " $k=$(repr(v))" for (k,v) in o), ' ')
+
+
+#-----------------------------------------------------------------------------# Element
+struct Element{T} <: AbstractVector{Union{T, AbstractString}}
+    tag::Symbol
+    attributes::Attributes
+    children::Vector{T}
+    function Element(tag::Symbol, attributes::Attributes, children::Vector{T}) where {T}
+        tag in VOID_ELEMENTS && !isempty(children) && error("void element $tag cannot have children.")
+        setfield!(attributes, :element, tag)
+        new{T}(tag, attributes, children)
+    end
+end
+tag(o::Element) = getfield(o, :tag)
+attributes(o::Element) = getfield(o, :attributes)
+children(o::Element) = getfield(o, :children)
+
+function Base.summary(io::IO, o::Element{T}) where {T}
+    n = length(o)
+    child_info = tag(o) in VOID_ELEMENTS ?
+        styled" {bright_black:(void element)}" :
+        styled""" {bright_black:($n $(n == 1 ? "child" : "children") of type $T)}"""
+    print(io, "<", tag(o), attributes(o), ">", child_info)
+end
+Element(tag, children...; kw...) = Element(Symbol(tag), Attributes(; kw...), isempty(children) ? [] : collect(children))
+# methods that simply pass through to children
+for f in (:length, :size, :iterate, :getindex, :setindex!)
+    @eval Base.$f(o::Element, x...) = $f(children(o), x...)
+end
+# methods that return the AbstractArray
+for f in (:push!, :resize!, :deleteat!)
+    @eval function Base.$f(o::Element, x)
+        tag(o) in VOID_ELEMENTS && error("Cannot add children to void element :$(tag(o)).")
+        $f(children(o), x)
+    end
+end
+function (o::Element)(children...; kw...)
+    push!(o, children...)
+    for (k, v) in pairs(kw)
+        setproperty!(o, k, v)
+    end
+    return o
+end
+
+# properties pass through to attributes
+Base.propertynames(o::Element) = propertynames(attributes(o))
+Base.getproperty(o::Element, x::Symbol) = getproperty(attributes(o), x)
+Base.setproperty!(o::Element, x::Symbol, v) = setproperty!(attributes(o), x, v)
+
+function Base.show(io::IO, ::MIME"text/html", o::Element)
+    tag(o) in VOID_ELEMENTS ?
+        print(io, '<', tag(o), attributes(o), '>') :
+        print(io, '<', tag(o), attributes(o), '>', children(o)..., "</", tag(o), '>')
+end
+
+#-----------------------------------------------------------------------------# h
+h(tag, children...; kw...) = Element(Symbol(tag), children...; kw...)
+Base.propertynames(::typeof(h)) = keys(Reference.ELEMENTS)
+Base.getproperty(::typeof(h), x::Symbol) = h(x)
 
 #-----------------------------------------------------------------------------# iframe
-iframe(children...; kw...) = Element(:iframe, Attributes(; kw..., srcdoc=escape(repr("text/html", Children(children...)))), Children())
+iframe(children...; kw...) = h.iframe(; kw..., srcdoc = join(escape(repr("text/html", x)) for x in children))
 
-"IFrame is deprecated.  See `Cobweb.iframe`."
-function IFrame(x; kw...)
-    Base.depwarn("IFrame", :iframe, force=true)
-    iframe(x; kw...)
-end
-
-#-----------------------------------------------------------------------------# @h
-"""
-    @h ex
-
-Convert any valid HTML `<tag>` in `ex` to `Cobweb.h.<tag>`.
-
-### Examples
-
-    @h div(p("This is a paragraph"), p("Here is some", strong("bold"), "text"))
-    # <div><p>This is a paragraph</p><p>Here is some<strong>bold</strong>text</p></div>
-"""
-macro h(ex)
-    esc(_h(ex))
-end
-
-_h(ex::Expr) = (ex.args .= _h.(ex.args); return ex)
-_h(x::Symbol) = x in propertynames(h) ? Expr(:., :(Cobweb.h), QuoteNode(x)) : x
-_h(x) = x
-
-
-
-#-----------------------------------------------------------------------------# Javascript
-"""
-    Javascript(content::String)
-
-String wrapper to identify content as Javascript.  Will be displayed appropriately in text/javascript and text/html mime types.
-"""
-struct Javascript
-    x::String
-end
-Base.show(io::IO, ::MIME"text/javascript", j::Javascript) = print(io, j.x)
-Base.show(io::IO, ::MIME"text/html", j::Javascript) = print(io, "<script>", j.x, "</script>")
-
-macro js_str(ex)
-    esc(Cobweb.Javascript(ex))
-end
-
-#-----------------------------------------------------------------------------# CSS
-"""
-    CSS(content::String)
-
-String wrapper to identify content as CSS.  Will be displayed appropriately in text/css and text/html mime types.
-"""
-struct CSS
-    x::String
-end
-Base.show(io::IO, ::MIME"text/css", c::CSS) = print(io, c.x)
-Base.show(io::IO, ::MIME"text/html", c::CSS) = print(io, "<style>", c.x, "</style>")
-
-macro css_str(ex)
-    esc(Cobweb.CSS(ex))
-end
-
-#-----------------------------------------------------------------------------# Comment
-"""
-    Comment(x)
-
-Inserts into HTML as `<!-- \$(string(x)) ->`.
-"""
-struct Comment
-    x::String
-    Comment(x) = new(string(x))
-end
-Base.show(io::IO, ::MIME"text/html", o::Comment) = print(io, "<!-- ", o.x, " -->")
-
-
-# #-----------------------------------------------------------------------------# parser
-# include("parser.jl")
-
-end #module
+end # module

@@ -5,29 +5,20 @@ using Cobweb, Test
     n1 = h.div("hi")
     n2 = h.div("hi")
     @test repr("text/html", n1) == repr("text/html", n2) == "<div>hi</div>"
-end
 
-# #-----------------------------------------------------------------------------# help
-# @testset "help" begin
-#     @test only(help(:a)) isa Cobweb.ElementSpec
-#     @test only(help(:id)) isa Cobweb.AttributeSpec
-# end
+    @test repr("text/html", Cobweb.Comment("hi")) == "<!-- hi -->"
+end
 
 #-----------------------------------------------------------------------------# escaping
 @testset "escaping" begin
-    chars = ['<', '>', ''', '"']
+    chars = string.(first.(Cobweb.ESCAPE_CHARS))
     for char in chars
-        @test char ∉ Cobweb.escape(join(chars))
+        @test char != escape(char)
+        @test char == unescape(char)
+        @test char == unescape(escape(char))
     end
-    @test Cobweb.escape("&") != "&"
 end
 
-#-----------------------------------------------------------------------------# CSSUnits
-@testset "CSSUnits" begin
-    for unit in setdiff(names(Cobweb.CSSUnits), [:CSSUnits])
-        @test 1 * getproperty(Cobweb.CSSUnits, unit) == "1$unit"
-    end
-end
 
 #-----------------------------------------------------------------------------# Style
 @testset "Style" begin
@@ -37,12 +28,12 @@ end
     @test !isempty(s)
     @test s.color == "red"
     @test repr("text/html", s) == "\"color:red\""
-    s.var"font-size" = 12 * Cobweb.CSSUnits.px
+    s.var"font-size" = "12px"
     @test length(s) == 2 && s.var"font-size" == "12px"
-    @test repr("text/html", s) == "\"color:red; font-size:12px\""
+    @test repr("text/html", s) == "\"color:red;font-size:12px\""
 
-    a = Style(color = :red, var"font-size" = 12 * Cobweb.CSSUnits.px)
-    b = Style(color = :blue, var"font-size" = 14 * Cobweb.CSSUnits.px)
+    a = Style(color = :red, var"font-size" = "12px")
+    b = Style(color = :blue, var"font-size" = "14px")
     c = merge(a, b)
     @test a.color == "red"
     @test b.color == "blue"
@@ -59,54 +50,40 @@ end
     push!(c, "class1")
     @test length(c) == 1
     @test repr("text/html", c) == "\"class1\""
-    append!(c, ["class2", "class3"])
-    @test length(c) == 3
-    @test repr("text/html", c) == "\"class1 class2 class3\""
 
     a = Class("one", "two")
     b = Class("three four")
-    c = merge(a, b)
-    @test length(a) == length(b) == 2
-    @test length(c) == 4
-    merge!(a, b)
-    @test length(a) == 4
+    @test length(a) == 2
+    @test length(b) == 2
+    @test repr("text/html", a) == "\"one two\""
+    @test repr("text/html", b) == "\"four three\""
 end
 
-# #-----------------------------------------------------------------------------# Attributes
-# @testset "Attributes" begin
-#     a = Attributes()
-#     @test !isempty(propertynames(a))
-#     @test isempty(a)
-#     a.id = "myid"
-#     @test length(a) == 1
-#     @test repr("text/html", a) == "id=\"myid\""
-#     a.class = "myclass"
-#     @test length(a) == 2
-#     @test repr("text/html", a) == "id=\"myid\" class=\"myclass\""
+#-----------------------------------------------------------------------------# Attributes
+@testset "Attributes" begin
+    a = Attributes()
+    @test repr("text/html", a) == ""
+    @test !isempty(propertynames(a))
+    @test isempty(a)
+    a.id = "myid"
+    @test length(a) == 1
+    @test repr("text/html", a) == " id=\"myid\""
+    a.class = "myclass"
+    @test length(a) == 2
+    @test repr("text/html", a) == " class=\"myclass\" id=\"myid\""
 
-#     a = Attributes(id="myid", class="myclass")
-#     b = Attributes(id="myid2", class="myclass2")
-#     c = merge(a, b)
-#     @test length(a) == 2
-#     @test a.id == "myid"
-#     @test b.id == "myid2"
-#     @test c.id == "myid2"
-#     merge!(a, b)
-#     @test a.id == "myid2"
-#     @test length(a) == 2
-#     @test a.class isa Class
-#     @test a.style isa Style
-#     @test a.id isa String
-# end
+    @test Attributes() == Attributes()
+    @test Attributes(class="class") == Attributes(class=Class("class"))
+end
 
-# #-----------------------------------------------------------------------------# Element
-# @testset "Element" begin
-#     e = Element(:div)
-#     @test Cobweb.name(e) == :div
-#     @test repr("text/html", e) == "<div></div>"
-#     @test repr("text/html", h.div) == "<div></div>"
-#     @test repr("text/html", h.div("hi")) == "<div>hi</div>"
-# end
+#-----------------------------------------------------------------------------# Element
+@testset "Element" begin
+    e = Element(:div)
+    @test Cobweb.tag(e) == :div
+    @test repr("text/html", e) == "<div></div>"
+    @test repr("text/html", h.div) == "<div></div>"
+    @test repr("text/html", h.div("hi")) == "<div>hi</div>"
+end
 
 # #-----------------------------------------------------------------------------# Creating Nodes
 # @testset "Node Creation" begin
@@ -179,14 +156,14 @@ end
 #     @test splice!(node, 1) == "new"
 #     @test isempty(node)
 # end
-# #-----------------------------------------------------------------------------# indexing
-# @testset "get/setindex" begin
-#     o = h.div("hi")
-#     @test o[1] == "hi"
-#     @test only(o) == "hi"
-#     @test o[:] == ["hi"]
-#     @test collect(o) == ["hi"]
-# end
+#-----------------------------------------------------------------------------# indexing
+@testset "get/setindex" begin
+    o = h.div("hi")
+    @test o[1] == "hi"
+    @test only(o) == "hi"
+    @test o[:] == ["hi"]
+    @test collect(o) == ["hi"]
+end
 # #-----------------------------------------------------------------------------# HTML
 # @testset "HTML" begin
 #     @test repr("text/html", n1) == "<div>hi</div>"
@@ -195,16 +172,16 @@ end
 # @testset "preview" begin
 #     get(ENV, "CI", "false") == "true" && @test preview(h.div("hi")) isa Base.Process
 # end
-# #-----------------------------------------------------------------------------# Javascript
-# @testset "Javascript" begin
-#     @test repr("text/javascript", Cobweb.Javascript("x")) == "x"
-#     @test repr("text/html", Cobweb.Javascript("x")) == "<script>x</script>"
-# end
-# #-----------------------------------------------------------------------------# CSS
-# @testset "CSS" begin
-#     @test repr("text/css", Cobweb.CSS("x")) == "x"
-#     @test repr("text/html", Cobweb.CSS("x")) == "<style>x</style>"
-# end
+#-----------------------------------------------------------------------------# Javascript
+@testset "Javascript" begin
+    @test repr("text/javascript", Cobweb.Javascript("x")) == "x"
+    @test repr("text/html", Cobweb.Javascript("x")) == "<script>x</script>"
+end
+#-----------------------------------------------------------------------------# CSS
+@testset "CSS" begin
+    @test repr("text/css", Cobweb.CSS("x")) == "x"
+    @test repr("text/html", Cobweb.CSS("x")) == "<style>x</style>"
+end
 
 # #-----------------------------------------------------------------------------# docs
 # @testset "Docs Build (read/write)" begin
@@ -224,33 +201,9 @@ end
 #         @test node == node2
 #     end
 # end
-# #-----------------------------------------------------------------------------# IFrame
-# @testset "IFrame" begin
-#     o = IFrame("test", height="100px")
-#     @test occursin("100px", repr("text/html", o))
-# end
-# #-----------------------------------------------------------------------------# pretty
-# @testset "pretty" begin
-#     @test Cobweb.pretty(h.div(h.p("A"), h.p("B"))) == "<div>\n    <p>A</p>\n    <p>B</p>\n</div>"
-# end
-
-
-# #-----------------------------------------------------------------------------# Style
-# @testset "Style" begin
-#     n = h.div(style=Style(color = :red))
-#     @test n.style.color == :red
-#     n.style.color = "blue"
-#     @test occursin("blue", repr("text/html", n))
-# end
-
-# #-----------------------------------------------------------------------------# Children
-# @testset "Children" begin
-#     c = Children(h.p("A"), h.p("B"))
-#     @test html(c) == "<p>A</p><p>B</p>"
-# end
-
-# #-----------------------------------------------------------------------------# other
-# @testset "other" begin
-#     @test repr("text/html", Cobweb.Doctype()) == "<!DOCTYPE html>"
-#     @test repr("text/html", Cobweb.Comment("text")) == "<!-- text -->"
-# end
+#-----------------------------------------------------------------------------# IFrame
+@testset "IFrame" begin
+    o = iframe(h.p("test"), height="100px")
+    @test occursin("100px", repr("text/html", o))
+    @test occursin(escape("<p>test</p>"), repr("text/html", o))
+end
